@@ -1,0 +1,39 @@
+{#
+/**
+ * Matrix Widget Template for MeteoCraft
+ *
+ * This template is designed to be included from Matrix/SuperTable fields
+ * in your site templates. It renders the Ottawa weather widget with
+ * data from the widget variable.
+ *
+ * Usage in your macro:
+ * {% case "weather" %}
+ *     {% include 'meteocraft/matrix-widget' %}
+ *
+ * The widget variable should be available from your Matrix block context.
+ */
+#}
+
+{#
+    Matrix/SuperTable blocks expose the Ottawa Weather field value via the
+    block's field handle (recommended: `ottawaWeather`). Accessing the field
+    ensures Craft runs the field's normalizeValue() implementation instead of
+    calling it on the Matrix block itself.
+ #}
+{% set weatherData = widget.getFieldValue('ottawaWeather') %}
+
+{# Fallback: if the field handle differs, still fetch fresh data directly #}
+{% if weatherData is null %}
+    {% set weatherField = craft.app.fields.getFieldByHandle('ottawaWeather') %}
+    {% if weatherField %}
+        {% set weatherData = weatherField.normalizeValue(null, entry ?? null) %}
+    {% endif %}
+{% endif %}
+
+{% set language = craft.app.language %}
+{% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
+
+{% include 'meteocraft/widgets/ottawa-weather' with {
+    weatherData: weatherData,
+    language: lang
+} %}
