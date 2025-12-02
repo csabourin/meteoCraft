@@ -111,10 +111,32 @@ You should see "MeteoCraft" in the list of installed plugins.
 
 ## Post-Installation
 
+### Using as a Dashboard Widget
+
 1. Navigate to your CraftCMS Dashboard
 2. Click the **New Widget** button
 3. Select **Ottawa Weather** from the widget types
 4. The widget will immediately start displaying weather data
+
+### Using as a Field Type
+
+1. Go to **Settings** → **Fields**
+2. Create a new field and select **Ottawa Weather** as the field type
+3. Add this field to any Section, Matrix block, or SuperTable
+4. The field will display current weather data when viewing entries
+
+### Using in Matrix/SuperTable Widgets
+
+If you have a Matrix field or SuperTable with a block type that includes the Ottawa Weather field, you can display it in your templates:
+
+```twig
+{% case "weather" %}
+    {% include 'meteocraft/matrix-widget' %}
+```
+
+The plugin provides a `matrix-widget.twig` template specifically designed for this use case. This ensures you always use the latest template from the plugin when you update it.
+
+**Important:** Do NOT copy the plugin templates to your site templates directory. Always reference them using the `meteocraft/` prefix to ensure you get updates automatically.
 
 ## Requirements
 
