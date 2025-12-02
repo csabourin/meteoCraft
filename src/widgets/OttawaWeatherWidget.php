@@ -106,11 +106,11 @@ class OttawaWeatherWidget extends Widget
     private function parseWeatherData(array $properties): array
     {
         $current = $properties['currentConditions'] ?? null;
-        $forecastGroup = $properties['forecastGroup'] ?? null;
+        $hourlyForecastGroup = $properties['hourlyForecastGroup'] ?? null;
 
         $result = [
             'current' => null,
-            'forecasts' => [],
+            'periods' => [],
         ];
 
         // Parse current conditions
@@ -130,45 +130,130 @@ class OttawaWeatherWidget extends Widget
             ];
         }
 
-        // Parse forecasts (get next 3 days - skip tonight if present)
-        if ($forecastGroup && isset($forecastGroup['forecasts'])) {
-            $forecasts = $forecastGroup['forecasts'];
-            $daysAdded = 0;
-            $dayForecasts = [];
-
-            foreach ($forecasts as $forecast) {
-                $periodName = $forecast['period']['textForecastName']['en'] ?? '';
-
-                // Skip night forecasts, only get day forecasts
-                if (strpos(strtolower($periodName), 'night') !== false) {
-                    continue;
-                }
-
-                $dayForecasts[] = [
-                    'period' => $periodName,
-                    'day' => $forecast['period']['value']['en'] ?? '',
-                    'temperature' => $forecast['temperatures']['temperature'][0]['value']['en'] ?? null,
-                    'tempClass' => $forecast['temperatures']['temperature'][0]['class']['en'] ?? 'high',
-                    'condition' => $forecast['cloudPrecip']['en'] ?? 'N/A',
-                    'summary' => $forecast['textSummary']['en'] ?? '',
-                    'iconCode' => $forecast['abbreviatedForecast']['icon']['value'] ?? null,
-                    'iconUrl' => $forecast['abbreviatedForecast']['icon']['url'] ?? null,
-                    'iconSummary' => $forecast['abbreviatedForecast']['textSummary']['en'] ?? '',
-                    'humidity' => $forecast['relativeHumidity']['value']['en'] ?? null,
-                    'windSummary' => $forecast['winds']['textSummary']['en'] ?? null,
-                ];
-
-                $daysAdded++;
-
-                // Get next 3 days only
-                if ($daysAdded >= 3) {
-                    break;
-                }
-            }
-
-            $result['forecasts'] = $dayForecasts;
+        // Parse hourly forecasts and group by time of day (today only)
+        if ($hourlyForecastGroup && isset($hourlyForecastGroup['hourlyForecasts'])) {
+            $hourlyForecasts = $hourlyForecastGroup['hourlyForecasts'];
+            $result['periods'] = $this->groupHourlyForecastsByPeriod($hourlyForecasts);
         }
 
         return $result;
+    }
+
+    /**
+     * Group hourly forecasts into morning, afternoon, and evening periods for today
+     *
+     * @param array $hourlyForecasts
+     * @return array
+     */
+    private function groupHourlyForecastsByPeriod(array $hourlyForecasts): array
+    {
+        $periods = [
+            'morning' => ['name' => 'Morning', 'hours' => [], 'range' => '6am - 12pm'],
+            'afternoon' => ['name' => 'Afternoon', 'hours' => [], 'range' => '12pm - 6pm'],
+            'evening' => ['name' => 'Evening', 'hours' => [], 'range' => '6pm - 12am'],
+        ];
+
+        // Get today's date (in UTC to match API timestamps)
+        $today = new \DateTime('now', new \DateTimeZone('UTC'));
+        $todayDate = $today->format('Y-m-d');
+
+        foreach ($hourlyForecasts as $forecast) {
+            $timestamp = $forecast['timestamp'];
+            $dt = new \DateTime($timestamp, new \DateTimeZone('UTC'));
+
+            // Convert to Ottawa time (EST/EDT)
+            $dt->setTimezone(new \DateTimeZone('America/Toronto'));
+            $forecastDate = $dt->format('Y-m-d');
+            $hour = (int)$dt->format('H');
+
+            // Only process today's forecasts
+            if ($forecastDate !== $todayDate) {
+                continue;
+            }
+
+            $periodData = [
+                'time' => $dt->format('g:i A'),
+                'hour' => $hour,
+                'temperature' => $forecast['temperature']['value']['en'] ?? null,
+                'feelsLike' => $forecast['windChill']['value']['en'] ?? $forecast['temperature']['value']['en'] ?? null,
+                'condition' => $forecast['condition']['en'] ?? 'N/A',
+                'iconCode' => $forecast['iconCode']['value'] ?? null,
+                'iconUrl' => $forecast['iconCode']['url'] ?? null,
+                'windSpeed' => $forecast['wind']['speed']['value']['en'] ?? null,
+                'windDirection' => $forecast['wind']['direction']['value']['en'] ?? null,
+                'precipitation' => $forecast['lop']['value']['en'] ?? null,
+            ];
+
+            // Group by time of day
+            if ($hour >= 6 && $hour < 12) {
+                $periods['morning']['hours'][] = $periodData;
+            } elseif ($hour >= 12 && $hour < 18) {
+                $periods['afternoon']['hours'][] = $periodData;
+            } elseif ($hour >= 18 && $hour < 24) {
+                $periods['evening']['hours'][] = $periodData;
+            }
+        }
+
+        // Calculate representative data for each period
+        $result = [];
+        foreach ($periods as $key => $period) {
+            if (count($period['hours']) > 0) {
+                $result[] = $this->calculatePeriodSummary($period);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Calculate summary statistics for a time period
+     *
+     * @param array $period
+     * @return array
+     */
+    private function calculatePeriodSummary(array $period): array
+    {
+        $hours = $period['hours'];
+        $count = count($hours);
+
+        if ($count === 0) {
+            return null;
+        }
+
+        // Get the middle forecast as representative
+        $middleIndex = (int)floor($count / 2);
+        $representative = $hours[$middleIndex];
+
+        // Calculate temperature range
+        $temps = array_column($hours, 'temperature');
+        $minTemp = min($temps);
+        $maxTemp = max($temps);
+
+        // Get most common condition
+        $conditions = array_column($hours, 'condition');
+        $conditionCounts = array_count_values($conditions);
+        arsort($conditionCounts);
+        $mostCommonCondition = key($conditionCounts);
+
+        // Calculate average precipitation chance
+        $precips = array_filter(array_column($hours, 'precipitation'));
+        $avgPrecip = count($precips) > 0 ? round(array_sum($precips) / count($precips)) : 0;
+
+        return [
+            'name' => $period['name'],
+            'range' => $period['range'],
+            'temperature' => round(($minTemp + $maxTemp) / 2),
+            'tempRange' => $minTemp . '°C - ' . $maxTemp . '°C',
+            'minTemp' => $minTemp,
+            'maxTemp' => $maxTemp,
+            'feelsLike' => $representative['feelsLike'],
+            'condition' => $mostCommonCondition,
+            'iconUrl' => $representative['iconUrl'],
+            'iconCode' => $representative['iconCode'],
+            'windSpeed' => $representative['windSpeed'],
+            'windDirection' => $representative['windDirection'],
+            'precipitation' => $avgPrecip,
+            'hourlyData' => $hours, // Include all hourly data for tooltip/details
+        ];
     }
 }

@@ -1,14 +1,15 @@
 # MeteoCraft - Ottawa Weather Widget for CraftCMS
 
-A CraftCMS dashboard widget that displays current weather conditions and a 3-day forecast for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC).
+A CraftCMS dashboard widget that displays current weather conditions and today's forecast by time period (morning/afternoon/evening) for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC).
 
 ## Features
 
-- **Current Weather Conditions**: Temperature, condition, feels-like temperature, humidity, wind speed/direction, and barometric pressure
-- **3-Day Forecast**: Upcoming weather forecasts with temperatures and conditions
+- **Current Weather Conditions**: Real-time temperature, condition, feels-like temperature, humidity, wind speed/direction, and barometric pressure
+- **Today's Forecast by Time Period**: Weather breakdown for morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am)
+- **Detailed Period Information**: Each time period shows temperature range, conditions, feels-like temperature, wind, and precipitation probability
 - **Beautiful Design**: Modern, responsive widget design with gradient styling
 - **Data Caching**: Weather data is cached for 30 minutes to reduce API calls
-- **Official Data Source**: Uses Environment and Climate Change Canada's official weather API
+- **Official Data Source**: Uses Environment and Climate Change Canada's official weather API with hourly forecasts
 
 ## Requirements
 
@@ -55,7 +56,8 @@ git clone https://github.com/csabourin/meteoCraft.git meteocraft
 
 The widget will display:
 - Current weather conditions at the top with a purple gradient background
-- Three-day forecast below in a grid layout
+- Today's forecast broken down by time periods (morning, afternoon, evening) in a grid layout
+- Detailed information for each period including temperature range, conditions, wind, and precipitation
 - Weather data updates automatically every 30 minutes
 
 ## Data Source
@@ -105,7 +107,9 @@ To add a custom icon for the widget:
 The widget fetches and parses:
 
 - **Current Conditions**: Real-time weather observations from Ottawa Macdonald-Cartier International Airport
-- **Forecasts**: Day and night forecasts with temperatures, conditions, wind, humidity, and weather icons
+- **Hourly Forecasts**: 48 hours of hourly forecasts from the ECCC API
+- **Time Period Aggregation**: Groups hourly forecasts into morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am) periods
+- **Smart Summarization**: Calculates temperature ranges, most common conditions, and average precipitation for each period
 
 ### Error Handling
 
@@ -147,10 +151,17 @@ For issues, questions, or contributions, please visit the [GitHub repository](ht
 
 ## Changelog
 
+### Version 1.0.1 (2025-12-02)
+
+- Updated to show today's weather by time period (morning/afternoon/evening)
+- Enhanced period cards with temperature ranges and detailed information
+- Added precipitation probability display
+- Improved data aggregation from hourly forecasts
+
 ### Version 1.0.0 (2025-12-02)
 
 - Initial release
 - Current weather conditions display
-- 3-day forecast
+- Weather forecast display
 - Data caching (30 minutes)
 - Responsive widget design

@@ -51,6 +51,13 @@
         gap: 15px;
     }
 
+    .weather-periods-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 15px;
+    }
+
     .forecast-day {
         background: #f7fafc;
         border: 1px solid #e2e8f0;
@@ -68,8 +75,14 @@
     .forecast-day-name {
         font-weight: bold;
         color: #2d3748;
+        margin-bottom: 5px;
+        font-size: 16px;
+    }
+
+    .forecast-time-range {
+        font-size: 11px;
+        color: #a0aec0;
         margin-bottom: 10px;
-        font-size: 14px;
     }
 
     .forecast-icon img {
@@ -79,16 +92,37 @@
     }
 
     .forecast-temp {
-        font-size: 24px;
+        font-size: 28px;
         font-weight: bold;
         color: #4a5568;
         margin: 10px 0;
     }
 
-    .forecast-condition {
+    .forecast-temp-range {
         font-size: 12px;
         color: #718096;
+        margin-bottom: 8px;
+    }
+
+    .forecast-condition {
+        font-size: 13px;
+        color: #4a5568;
         line-height: 1.4;
+        margin-bottom: 10px;
+    }
+
+    .forecast-details {
+        font-size: 11px;
+        color: #718096;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 10px;
+        margin-top: 10px;
+    }
+
+    .forecast-detail-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
     }
 
     .weather-error {
@@ -160,29 +194,53 @@
             </div>
         </div>
 
-        {# 3-Day Forecast #}
-        {% if weatherData.forecasts|length > 0 %}
+        {# Today's Forecast by Time Period #}
+        {% if weatherData.periods|length > 0 %}
+            <div class="weather-periods-title">Today's Forecast</div>
             <div class="weather-forecast">
-                {% for forecast in weatherData.forecasts %}
+                {% for period in weatherData.periods %}
                     <div class="forecast-day">
                         <div class="forecast-day-name">
-                            {{ forecast.period }}
+                            {{ period.name }}
+                        </div>
+                        <div class="forecast-time-range">
+                            {{ period.range }}
                         </div>
 
-                        {% if forecast.iconUrl %}
+                        {% if period.iconUrl %}
                             <div class="forecast-icon">
-                                <img src="{{ forecast.iconUrl }}"
-                                     alt="{{ forecast.iconSummary }}"
+                                <img src="{{ period.iconUrl }}"
+                                     alt="{{ period.condition }}"
                                      loading="lazy">
                             </div>
                         {% endif %}
 
                         <div class="forecast-temp">
-                            {{ forecast.temperature }}°C
+                            {{ period.temperature }}°C
+                        </div>
+                        <div class="forecast-temp-range">
+                            {{ period.tempRange }}
                         </div>
 
                         <div class="forecast-condition">
-                            {{ forecast.iconSummary }}
+                            {{ period.condition }}
+                        </div>
+
+                        <div class="forecast-details">
+                            <div class="forecast-detail-row">
+                                <span>Feels Like:</span>
+                                <strong>{{ period.feelsLike }}°C</strong>
+                            </div>
+                            <div class="forecast-detail-row">
+                                <span>Wind:</span>
+                                <strong>{{ period.windDirection }} {{ period.windSpeed }} km/h</strong>
+                            </div>
+                            {% if period.precipitation > 0 %}
+                                <div class="forecast-detail-row">
+                                    <span>Precipitation:</span>
+                                    <strong>{{ period.precipitation }}%</strong>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 {% endfor %}
