@@ -7,8 +7,10 @@ use craft\base\Plugin;
 use csabourin\meteocraft\fields\OttawaWeatherField;
 use csabourin\meteocraft\widgets\OttawaWeatherWidget;
 use craft\events\RegisterComponentTypesEvent;
+use craft\events\RegisterTemplateRootsEvent;
 use craft\services\Dashboard;
 use craft\services\Fields;
+use craft\web\View;
 use yii\base\Event;
 
 /**
@@ -55,6 +57,15 @@ class MeteoCraft extends Plugin
             Fields::EVENT_REGISTER_FIELD_TYPES,
             function (RegisterComponentTypesEvent $event) {
                 $event->types[] = OttawaWeatherField::class;
+            }
+        );
+
+        // Expose this plugin's templates under the `meteocraft` namespace
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
+            function (RegisterTemplateRootsEvent $event) {
+                $event->roots['meteocraft'] = __DIR__ . '/templates';
             }
         );
 
