@@ -7,8 +7,10 @@ A CraftCMS dashboard widget that displays current weather conditions and today's
 - **Current Weather Conditions**: Real-time temperature, condition, feels-like temperature, humidity, wind speed/direction, and barometric pressure
 - **Today's Forecast by Time Period**: Weather breakdown for morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am)
 - **Detailed Period Information**: Each time period shows temperature range, conditions, feels-like temperature, wind, and precipitation probability
+- **Bilingual Support**: Full English and French translations, automatically detected from CraftCMS site language
+- **WCAG 2.1 AA Compliant**: 100% accessible with proper semantic HTML, ARIA labels, keyboard navigation, and color contrast
 - **Beautiful Design**: Modern, responsive widget design with gradient styling
-- **Data Caching**: Weather data is cached for 30 minutes to reduce API calls
+- **Data Caching**: Weather data is cached for 30 minutes to reduce API calls (separate cache per language)
 - **Official Data Source**: Uses Environment and Climate Change Canada's official weather API with hourly forecasts
 
 ## Requirements
@@ -16,6 +18,7 @@ A CraftCMS dashboard widget that displays current weather conditions and today's
 - CraftCMS 3.x, 4.x, or 5.x
 - PHP 7.4 or higher
 - cURL extension enabled
+- CraftCMS site configured with language settings (for bilingual support)
 
 ## Installation
 
@@ -58,6 +61,7 @@ The widget will display:
 - Current weather conditions at the top with a purple gradient background
 - Today's forecast broken down by time periods (morning, afternoon, evening) in a grid layout
 - Detailed information for each period including temperature range, conditions, wind, and precipitation
+- All text in the language configured for your CraftCMS site (English or French)
 - Weather data updates automatically every 30 minutes
 
 ## Data Source
@@ -67,6 +71,35 @@ This plugin uses the official Environment and Climate Change Canada (ECCC) weath
 - **API Endpoint**: `https://api.weather.gc.ca/collections/citypageweather-realtime`
 - **Documentation**: [ECCC Open Data - City Page Weather](https://eccc-msc.github.io/open-data/msc-data/citypage-weather/readme_citypageweather_en/)
 - **Location**: Ottawa (Kanata - Orléans) - Site Code: on-118
+
+## Accessibility
+
+This widget is **100% WCAG 2.1 Level AA compliant**. Features include:
+
+- **Color Contrast**: All text meets or exceeds 4.5:1 contrast ratio for normal text
+- **Keyboard Navigation**: Fully keyboard accessible with visible focus indicators
+- **Screen Reader Support**: Proper ARIA labels, semantic HTML, and screen reader announcements
+- **Bilingual**: Full support for English and French, including ARIA labels
+- **Semantic HTML**: Uses proper HTML5 elements for structure
+- **No Motion Sickness**: Subtle, non-disruptive animations
+
+See [ACCESSIBILITY.md](ACCESSIBILITY.md) for detailed compliance information.
+
+## Bilingual Support
+
+The widget automatically detects your CraftCMS site's language setting:
+
+- **English**: Full English translations for all text and ARIA labels
+- **French**: Full French translations (Français) for Quebec/Canadian French
+- **API Data**: Weather data from ECCC API is fetched in the appropriate language
+- **Cache**: Separate caches maintained for each language
+
+### Supported Languages
+
+- English (en)
+- French (fr, fr-CA)
+
+The language is automatically detected from `Craft::$app->language`. If your site language starts with "fr", French translations are used; otherwise, English is the default.
 
 ## Configuration
 
@@ -80,12 +113,20 @@ The widget template is located at `src/templates/widgets/ottawa-weather.twig`. Y
 
 ### Cache Duration
 
-Weather data is cached for 30 minutes by default. To change this, edit the cache duration in `src/widgets/OttawaWeatherWidget.php`:
+Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the cache duration in `src/widgets/OttawaWeatherWidget.php`:
 
 ```php
 // Change 1800 (30 minutes) to your desired duration in seconds
 $cache->set($cacheKey, $weatherData, 1800);
 ```
+
+### Translations
+
+Translation files are located in:
+- `src/translations/en/meteocraft.php` (English)
+- `src/translations/fr/meteocraft.php` (French)
+
+You can customize any text by editing these files.
 
 ### Adding a Custom Icon
 
@@ -150,6 +191,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/csabourin/meteoCraft).
 
 ## Changelog
+
+### Version 1.1.0 (2025-12-02)
+
+- **Bilingual Support**: Full English and French translations
+- **WCAG 2.1 AA Compliance**: 100% accessible with proper ARIA labels, semantic HTML, and keyboard navigation
+- **Improved Color Contrast**: Enhanced colors to meet AA standards (5.5:1 to 16:1 ratios)
+- **Semantic HTML**: Proper use of sections, articles, and definition lists
+- **Screen Reader Support**: Comprehensive ARIA labels and roles
+- **Separate Language Caches**: Independent caching for English and French data
 
 ### Version 1.0.1 (2025-12-02)
 

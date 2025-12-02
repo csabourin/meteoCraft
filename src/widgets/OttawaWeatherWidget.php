@@ -41,10 +41,15 @@ class OttawaWeatherWidget extends Widget
     {
         $weatherData = $this->fetchWeatherData();
 
+        // Get current site language
+        $language = Craft::$app->language;
+        $lang = (strpos($language, 'fr') === 0) ? 'fr' : 'en';
+
         return Craft::$app->getView()->renderTemplate(
             'meteocraft/widgets/ottawa-weather',
             [
                 'weatherData' => $weatherData,
+                'language' => $lang,
             ]
         );
     }
@@ -56,7 +61,11 @@ class OttawaWeatherWidget extends Widget
      */
     private function fetchWeatherData(): ?array
     {
-        $cacheKey = 'meteocraft_ottawa_weather';
+        // Get current site language
+        $language = Craft::$app->language;
+        $lang = (strpos($language, 'fr') === 0) ? 'fr' : 'en';
+
+        $cacheKey = 'meteocraft_ottawa_weather_' . $lang;
         $cache = Craft::$app->getCache();
 
         // Try to get cached data (cache for 30 minutes)
@@ -82,7 +91,7 @@ class OttawaWeatherWidget extends Widget
 
                     if (isset($data['features'][0]['properties'])) {
                         $properties = $data['features'][0]['properties'];
-                        $weatherData = $this->parseWeatherData($properties);
+                        $weatherData = $this->parseWeatherData($properties, $lang);
 
                         // Cache for 30 minutes
                         $cache->set($cacheKey, $weatherData, 1800);
@@ -101,9 +110,10 @@ class OttawaWeatherWidget extends Widget
      * Parse the weather data from ECCC API
      *
      * @param array $properties
+     * @param string $lang Language code (en or fr)
      * @return array
      */
-    private function parseWeatherData(array $properties): array
+    private function parseWeatherData(array $properties, string $lang = 'en'): array
     {
         $current = $properties['currentConditions'] ?? null;
         $hourlyForecastGroup = $properties['hourlyForecastGroup'] ?? null;
@@ -116,24 +126,24 @@ class OttawaWeatherWidget extends Widget
         // Parse current conditions
         if ($current) {
             $result['current'] = [
-                'condition' => $current['condition']['en'] ?? 'N/A',
-                'temperature' => $current['temperature']['value']['en'] ?? null,
-                'feelsLike' => $current['windChill']['value']['en'] ?? $current['temperature']['value']['en'] ?? null,
-                'humidity' => $current['relativeHumidity']['value']['en'] ?? null,
-                'windSpeed' => $current['wind']['speed']['value']['en'] ?? null,
-                'windDirection' => $current['wind']['direction']['value']['en'] ?? null,
-                'pressure' => $current['pressure']['value']['en'] ?? null,
-                'pressureTrend' => $current['pressure']['tendency']['en'] ?? null,
+                'condition' => $current['condition'][$lang] ?? 'N/A',
+                'temperature' => $current['temperature']['value'][$lang] ?? null,
+                'feelsLike' => $current['windChill']['value'][$lang] ?? $current['temperature']['value'][$lang] ?? null,
+                'humidity' => $current['relativeHumidity']['value'][$lang] ?? null,
+                'windSpeed' => $current['wind']['speed']['value'][$lang] ?? null,
+                'windDirection' => $current['wind']['direction']['value'][$lang] ?? null,
+                'pressure' => $current['pressure']['value'][$lang] ?? null,
+                'pressureTrend' => $current['pressure']['tendency'][$lang] ?? null,
                 'iconCode' => $current['iconCode']['value'] ?? null,
                 'iconUrl' => $current['iconCode']['url'] ?? null,
-                'lastUpdated' => $current['timestamp']['en'] ?? null,
+                'lastUpdated' => $current['timestamp'][$lang] ?? null,
             ];
         }
 
         // Parse hourly forecasts and group by time of day (today only)
         if ($hourlyForecastGroup && isset($hourlyForecastGroup['hourlyForecasts'])) {
             $hourlyForecasts = $hourlyForecastGroup['hourlyForecasts'];
-            $result['periods'] = $this->groupHourlyForecastsByPeriod($hourlyForecasts);
+            $result['periods'] = $this->groupHourlyForecastsByPeriod($hourlyForecasts, $lang);
         }
 
         return $result;
@@ -143,14 +153,15 @@ class OttawaWeatherWidget extends Widget
      * Group hourly forecasts into morning, afternoon, and evening periods for today
      *
      * @param array $hourlyForecasts
+     * @param string $lang Language code (en or fr)
      * @return array
      */
-    private function groupHourlyForecastsByPeriod(array $hourlyForecasts): array
+    private function groupHourlyForecastsByPeriod(array $hourlyForecasts, string $lang = 'en'): array
     {
         $periods = [
-            'morning' => ['name' => 'Morning', 'hours' => [], 'range' => '6am - 12pm'],
-            'afternoon' => ['name' => 'Afternoon', 'hours' => [], 'range' => '12pm - 6pm'],
-            'evening' => ['name' => 'Evening', 'hours' => [], 'range' => '6pm - 12am'],
+            'morning' => ['name' => Craft::t('meteocraft', 'Morning'), 'hours' => [], 'range' => Craft::t('meteocraft', 'morning_range')],
+            'afternoon' => ['name' => Craft::t('meteocraft', 'Afternoon'), 'hours' => [], 'range' => Craft::t('meteocraft', 'afternoon_range')],
+            'evening' => ['name' => Craft::t('meteocraft', 'Evening'), 'hours' => [], 'range' => Craft::t('meteocraft', 'evening_range')],
         ];
 
         // Get today's date (in UTC to match API timestamps)
@@ -174,14 +185,14 @@ class OttawaWeatherWidget extends Widget
             $periodData = [
                 'time' => $dt->format('g:i A'),
                 'hour' => $hour,
-                'temperature' => $forecast['temperature']['value']['en'] ?? null,
-                'feelsLike' => $forecast['windChill']['value']['en'] ?? $forecast['temperature']['value']['en'] ?? null,
-                'condition' => $forecast['condition']['en'] ?? 'N/A',
+                'temperature' => $forecast['temperature']['value'][$lang] ?? null,
+                'feelsLike' => $forecast['windChill']['value'][$lang] ?? $forecast['temperature']['value'][$lang] ?? null,
+                'condition' => $forecast['condition'][$lang] ?? 'N/A',
                 'iconCode' => $forecast['iconCode']['value'] ?? null,
                 'iconUrl' => $forecast['iconCode']['url'] ?? null,
-                'windSpeed' => $forecast['wind']['speed']['value']['en'] ?? null,
-                'windDirection' => $forecast['wind']['direction']['value']['en'] ?? null,
-                'precipitation' => $forecast['lop']['value']['en'] ?? null,
+                'windSpeed' => $forecast['wind']['speed']['value'][$lang] ?? null,
+                'windDirection' => $forecast['wind']['direction']['value'][$lang] ?? null,
+                'precipitation' => $forecast['lop']['value'][$lang] ?? null,
             ];
 
             // Group by time of day
