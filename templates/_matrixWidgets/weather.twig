@@ -12,36 +12,12 @@
 {% set language = craft.app.language %}
 {% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
 {% set cacheKey = 'weather_' ~ city|lower ~ '_' ~ lang %}
+{% set feedUrl = 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=' ~ city|url_encode %}
+{% set data = craft.app.runAction('external-api-data/data/fetch-json', { url: feedUrl }) %}
 
 {# Fetch weather data using PHP #}
 {% php %}
-use Craft;
 
-$city = $context['city'];
-$lang = $context['lang'];
-$cacheKey = $context['cacheKey'];
-$cache = Craft::$app->getCache();
-
-// Try to get cached data (cache for 30 minutes)
-$weatherData = $cache->get($cacheKey);
-
-if ($weatherData === false) {
-    try {
-        // Fetch data from ECCC API
-        $url = 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=' . urlencode($city);
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode === 200 && $response) {
-            $data = json_decode($response, true);
 
             if (isset($data['features'][0]['properties'])) {
                 $properties = $data['features'][0]['properties'];
