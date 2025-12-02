@@ -1,7 +1,7 @@
 {#
   Ottawa Weather Display
 
-  Usage: {% include 'meteocraft/weather-display' %}
+  Usage: {% include '_weather/display' %}
 
   Optional parameters:
   - city: City to display (default: 'Ottawa')
@@ -11,7 +11,7 @@
 {% set city = city ?? 'Ottawa' %}
 {% set language = craft.app.language %}
 {% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
-{% set cacheKey = 'meteocraft_' ~ city|lower ~ '_weather_' ~ lang %}
+{% set cacheKey = 'weather_' ~ city|lower ~ '_' ~ lang %}
 
 {# Fetch weather data using PHP #}
 {% php %}
@@ -74,9 +74,9 @@ if ($weatherData === false) {
                 if ($hourlyForecastGroup && isset($hourlyForecastGroup['hourlyForecasts'])) {
                     $hourlyForecasts = $hourlyForecastGroup['hourlyForecasts'];
                     $periods = [
-                        'morning' => ['name' => Craft::t('meteocraft', 'Morning'), 'hours' => [], 'range' => Craft::t('meteocraft', 'morning_range')],
-                        'afternoon' => ['name' => Craft::t('meteocraft', 'Afternoon'), 'hours' => [], 'range' => Craft::t('meteocraft', 'afternoon_range')],
-                        'evening' => ['name' => Craft::t('meteocraft', 'Evening'), 'hours' => [], 'range' => Craft::t('meteocraft', 'evening_range')],
+                        'morning' => ['name' => Craft::t('weather', 'Morning'), 'hours' => [], 'range' => Craft::t('weather', 'morning_range')],
+                        'afternoon' => ['name' => Craft::t('weather', 'Afternoon'), 'hours' => [], 'range' => Craft::t('weather', 'afternoon_range')],
+                        'evening' => ['name' => Craft::t('weather', 'Evening'), 'hours' => [], 'range' => Craft::t('weather', 'evening_range')],
                     ];
 
                     $today = new DateTime('now', new DateTimeZone('UTC'));
@@ -168,18 +168,18 @@ if ($weatherData === false) {
 $context['weatherData'] = $weatherData;
 {% endphp %}
 
-<div class="meteocraft-weather-display" role="region" aria-label="{{ 'Ottawa Weather'|t('meteocraft') }}">
+<div class="meteocraft-weather-display" role="region" aria-label="{{ 'Ottawa Weather'|t('weather') }}">
     {% if weatherData %}
         {# Current Conditions #}
         {% if weatherData.current %}
             <div class="meteocraft-current">
-                <h2 class="meteocraft-title">{{ 'Current Conditions'|t('meteocraft') }}</h2>
+                <h2 class="meteocraft-title">{{ 'Current Conditions'|t('weather') }}</h2>
 
                 <div class="meteocraft-current-content">
                     {% if weatherData.current.iconUrl %}
                         <img
                             src="{{ weatherData.current.iconUrl }}"
-                            alt="{{ 'Weather icon for'|t('meteocraft') }} {{ weatherData.current.condition }}"
+                            alt="{{ 'Weather icon for'|t('weather') }} {{ weatherData.current.condition }}"
                             class="meteocraft-icon"
                             loading="lazy"
                         >
@@ -196,32 +196,32 @@ $context['weatherData'] = $weatherData;
                         <dl class="meteocraft-stats">
                             {% if weatherData.current.feelsLike %}
                                 <div class="meteocraft-stat">
-                                    <dt>{{ 'Feels Like'|t('meteocraft') }}:</dt>
+                                    <dt>{{ 'Feels Like'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.feelsLike }}°C</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.humidity %}
                                 <div class="meteocraft-stat">
-                                    <dt>{{ 'Humidity'|t('meteocraft') }}:</dt>
+                                    <dt>{{ 'Humidity'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.humidity }}%</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.windSpeed %}
                                 <div class="meteocraft-stat">
-                                    <dt>{{ 'Wind'|t('meteocraft') }}:</dt>
+                                    <dt>{{ 'Wind'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.windDirection }} {{ weatherData.current.windSpeed }} km/h</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.pressure %}
                                 <div class="meteocraft-stat">
-                                    <dt>{{ 'Pressure'|t('meteocraft') }}:</dt>
+                                    <dt>{{ 'Pressure'|t('weather') }}:</dt>
                                     <dd>
                                         {{ weatherData.current.pressure }} kPa
                                         {% if weatherData.current.pressureTrend %}
-                                            ({{ weatherData.current.pressureTrend|t('meteocraft') }})
+                                            ({{ weatherData.current.pressureTrend|t('weather') }})
                                         {% endif %}
                                     </dd>
                                 </div>
@@ -230,7 +230,7 @@ $context['weatherData'] = $weatherData;
 
                         {% if weatherData.current.lastUpdated %}
                             <div class="meteocraft-updated">
-                                {{ 'Updated'|t('meteocraft') }}: {{ weatherData.current.lastUpdated }}
+                                {{ 'Updated'|t('weather') }}: {{ weatherData.current.lastUpdated }}
                             </div>
                         {% endif %}
                     </div>
@@ -241,7 +241,7 @@ $context['weatherData'] = $weatherData;
         {# Today's Forecast #}
         {% if weatherData.periods|length %}
             <div class="meteocraft-forecast">
-                <h2 class="meteocraft-title">{{ 'Today\'s Forecast'|t('meteocraft') }}</h2>
+                <h2 class="meteocraft-title">{{ 'Today\'s Forecast'|t('weather') }}</h2>
 
                 <div class="meteocraft-periods">
                     {% for period in weatherData.periods %}
@@ -252,7 +252,7 @@ $context['weatherData'] = $weatherData;
                             {% if period.iconUrl %}
                                 <img
                                     src="{{ period.iconUrl }}"
-                                    alt="{{ 'Weather icon for'|t('meteocraft') }} {{ period.condition }}"
+                                    alt="{{ 'Weather icon for'|t('weather') }} {{ period.condition }}"
                                     class="meteocraft-icon"
                                     loading="lazy"
                                 >
@@ -266,7 +266,7 @@ $context['weatherData'] = $weatherData;
 
                             {% if period.precipitation > 0 %}
                                 <div class="meteocraft-period-precip">
-                                    {{ 'Precipitation'|t('meteocraft') }}: {{ period.precipitation }}%
+                                    {{ 'Precipitation'|t('weather') }}: {{ period.precipitation }}%
                                 </div>
                             {% endif %}
                         </div>
@@ -277,15 +277,15 @@ $context['weatherData'] = $weatherData;
 
         {# Attribution #}
         <div class="meteocraft-attribution">
-            {{ 'Weather data from'|t('meteocraft') }}
+            {{ 'Weather data from'|t('weather') }}
             <a href="https://weather.gc.ca" target="_blank" rel="noopener noreferrer">
-                {{ 'Environment and Climate Change Canada'|t('meteocraft') }}
-                <span class="sr-only">({{ 'opens in new window'|t('meteocraft') }})</span>
+                {{ 'Environment and Climate Change Canada'|t('weather') }}
+                <span class="sr-only">({{ 'opens in new window'|t('weather') }})</span>
             </a>
         </div>
     {% else %}
         <div class="meteocraft-error" role="alert">
-            <p>{{ 'Unable to load weather data'|t('meteocraft') }}</p>
+            <p>{{ 'Unable to load weather data'|t('weather') }}</p>
         </div>
     {% endif %}
 </div>

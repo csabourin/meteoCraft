@@ -1,133 +1,125 @@
-# MeteoCraft - Ottawa Weather Display for CraftCMS
+# Ottawa Weather Display Component
 
-A CraftCMS plugin that provides a simple, accessible weather display component for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC). Display current weather conditions and today's forecast by time period (morning/afternoon/evening) on your front-end pages using a simple Twig include.
+Simple, accessible weather display component for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC). Built for Craft CMS 5 with PHP in Twig support.
 
 ## Features
 
-- **Simple Integration**: Just include a Twig template - no complex setup required
-- **Current Weather Conditions**: Real-time temperature, condition, feels-like temperature, humidity, wind speed/direction, and barometric pressure
-- **Today's Forecast by Time Period**: Weather breakdown for morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am)
-- **Detailed Period Information**: Each time period shows temperature range, conditions, wind, and precipitation probability
-- **Bilingual Support**: Full English and French translations, automatically detected from CraftCMS site language
-- **WCAG 2.1 AA Compliant**: 100% accessible with proper semantic HTML, ARIA labels, keyboard navigation, and color contrast
-- **Customizable Styling**: Includes SCSS file with variables for easy theming
-- **Data Caching**: Weather data is cached for 30 minutes to reduce API calls (separate cache per language)
-- **PHP in Twig**: Uses Craft 5's PHP support for simple, self-contained logic
-- **Official Data Source**: Uses Environment and Climate Change Canada's official weather API with hourly forecasts
+- **Self-Contained**: Single Twig template with embedded PHP - no plugin required
+- **Current Weather**: Real-time temperature, humidity, wind, pressure, and conditions
+- **Today's Forecast**: Weather breakdown by time period (morning, afternoon, evening)
+- **Bilingual**: Full English and French support with translations
+- **Accessible**: WCAG 2.1 AA compliant with semantic HTML and ARIA labels
+- **Customizable**: SCSS file with variables for easy theming
+- **Cached**: 30-minute cache to optimize API calls
+- **Official Data**: Environment and Climate Change Canada API
 
 ## Requirements
 
-- CraftCMS 5.x (for PHP in Twig support / Twig Perversion)
+- Craft CMS 5.x
 - PHP 8.0 or higher
-- cURL extension enabled
-- CraftCMS site configured with language settings (for bilingual support)
+- PHP in Twig (Twig Perversion) enabled
+- cURL extension
 
 ## Installation
 
-### Quick Install (Recommended)
+### 1. Copy Files to Your Craft Project
 
-**Method 1: Manual Installation**
+Copy the files from this repository to your Craft installation:
+
 ```bash
-cd /path/to/your/craftcms/project
-mkdir -p plugins
-git clone https://github.com/csabourin/meteoCraft.git plugins/meteocraft
-./craft plugin/install meteocraft
+# From this repository root, copy to your Craft project:
+cp -r templates/_weather /path/to/your/craft/templates/
+cp -r assets/scss /path/to/your/craft/assets/  # or wherever you keep SCSS
+cp -r translations /path/to/your/craft/modules/yourmodule/  # or your module directory
 ```
 
-**Method 2: Composer with Path Repository**
+### 2. Register Translations in Your Module
 
-Add to your project's `composer.json`:
-```json
+Add the translation category to your module's `config/app.php`:
+
+```php
+return [
+    'modules' => [
+        'yourmodule' => \modules\yourmodule\Module::class,
+    ],
+    'components' => [
+        'i18n' => [
+            'translations' => [
+                'weather' => [
+                    'class' => craft\i18n\PhpMessageSource::class,
+                    'sourceLanguage' => 'en',
+                    'basePath' => '@modules/yourmodule/translations',
+                    'allowOverrides' => true,
+                ],
+            ],
+        ],
+    ],
+];
+```
+
+Or if you prefer, add it directly in your module's `init()` method:
+
+```php
+public function init()
 {
-  "repositories": [
-    {
-      "type": "path",
-      "url": "./plugins/meteocraft"
-    }
-  ]
+    parent::init();
+
+    Craft::$app->i18n->translations['weather'] = [
+        'class' => PhpMessageSource::class,
+        'sourceLanguage' => 'en',
+        'basePath' => __DIR__ . '/translations',
+        'allowOverrides' => true,
+    ];
 }
 ```
 
-Then install:
-```bash
-composer require csabourin/meteocraft:@dev
-./craft plugin/install meteocraft
-```
+### 3. Import SCSS
 
-**For detailed installation instructions and troubleshooting, see [INSTALL.md](INSTALL.md)**
-
-## Usage
-
-### Basic Usage
-
-Simply include the weather display template anywhere in your Twig templates:
-
-```twig
-{% include 'meteocraft/weather-display' %}
-```
-
-That's it! The template will:
-- Automatically fetch fresh weather data from Environment Canada
-- Detect your site's language (English/French)
-- Display current conditions and today's forecast by time period
-- Cache the data for 30 minutes to optimize performance
-
-### Styling
-
-Import the SCSS file into your main stylesheet:
+Add to your main stylesheet:
 
 ```scss
 // In your main.scss
-@import 'path/to/vendor/csabourin/meteocraft/src/assets/scss/weather-display';
+@import 'path/to/assets/scss/weather';
 ```
 
-Or if using Craft's asset bundling:
+#### Customize Colors
+
+Define variables **before** importing:
 
 ```scss
-@import '../../../vendor/csabourin/meteocraft/src/assets/scss/weather-display';
-```
-
-#### Customizing Colors
-
-You can customize the colors by defining SCSS variables **before** importing the file:
-
-```scss
-// Define your custom colors first
+// Custom colors
 $meteocraft-primary-color: #0066cc;
 $meteocraft-background: #f8f9fa;
 $meteocraft-border-color: #dee2e6;
 $meteocraft-text-color: #212529;
 $meteocraft-border-radius: 8px;
 
-// Then import the styles
-@import 'path/to/vendor/csabourin/meteocraft/src/assets/scss/weather-display';
+// Import styles
+@import 'path/to/assets/scss/weather';
 ```
 
-### Advanced Usage
+## Usage
 
-#### Custom City (Future Enhancement)
+### Basic Usage
 
-The template currently displays Ottawa weather. To customize the city in future versions, you can pass a parameter:
+Include the template anywhere in your Twig files:
 
 ```twig
-{% include 'meteocraft/weather-display' with {
-    city: 'Ottawa'
-} %}
+{% include '_weather/display' %}
 ```
 
-#### Language Override
-
-The template auto-detects language from your site, but you can override it:
+### With Options
 
 ```twig
-{% include 'meteocraft/weather-display' with {
+{% include '_weather/display' with {
+    city: 'Ottawa',
     lang: 'fr'
 } %}
 ```
 
-### Example Integration
+### Example Integrations
 
-#### In a Layout Template
+#### In a Layout
 
 ```twig
 {# templates/_layout.twig #}
@@ -139,7 +131,7 @@ The template auto-detects language from your site, but you can override it:
 </head>
 <body>
     <aside class="weather-sidebar">
-        {% include 'meteocraft/weather-display' %}
+        {% include '_weather/display' %}
     </aside>
 
     <main>
@@ -149,185 +141,153 @@ The template auto-detects language from your site, but you can override it:
 </html>
 ```
 
-#### In a Specific Template
+#### In a Page Template
 
 ```twig
-{# templates/pages/home.twig #}
+{# templates/index.twig #}
 {% extends "_layout" %}
 
 {% block content %}
     <h1>Welcome</h1>
 
     <section class="weather-widget">
-        <h2>Current Weather</h2>
-        {% include 'meteocraft/weather-display' %}
+        <h2>Current Weather in Ottawa</h2>
+        {% include '_weather/display' %}
     </section>
 {% endblock %}
 ```
 
-## Data Source
+## File Structure
 
-This plugin uses the official Environment and Climate Change Canada (ECCC) weather API:
-
-- **API Endpoint**: `https://api.weather.gc.ca/collections/citypageweather-realtime`
-- **Documentation**: [ECCC Open Data - City Page Weather](https://eccc-msc.github.io/open-data/msc-data/citypage-weather/readme_citypageweather_en/)
-- **Location**: Ottawa (Kanata - Orléans) - Site Code: on-118
-
-## Accessibility
-
-This widget is **100% WCAG 2.1 Level AA compliant**. Features include:
-
-- **Color Contrast**: All text meets or exceeds 4.5:1 contrast ratio for normal text
-- **Keyboard Navigation**: Fully keyboard accessible with visible focus indicators
-- **Screen Reader Support**: Proper ARIA labels, semantic HTML, and screen reader announcements
-- **Bilingual**: Full support for English and French, including ARIA labels
-- **Semantic HTML**: Uses proper HTML5 elements for structure
-- **No Motion Sickness**: Subtle, non-disruptive animations
-
-See [ACCESSIBILITY.md](ACCESSIBILITY.md) for detailed compliance information.
-
-## Bilingual Support
-
-The widget automatically detects your CraftCMS site's language setting:
-
-- **English**: Full English translations for all text and ARIA labels
-- **French**: Full French translations (Français) for Quebec/Canadian French
-- **API Data**: Weather data from ECCC API is fetched in the appropriate language
-- **Cache**: Separate caches maintained for each language
-
-### Supported Languages
-
-- English (en)
-- French (fr, fr-CA)
-
-The language is automatically detected from `Craft::$app->language`. If your site language starts with "fr", French translations are used; otherwise, English is the default.
+```
+/your-craft-project/
+├── templates/
+│   └── _weather/
+│       └── display.twig          # Main weather display template
+├── assets/
+│   └── scss/
+│       └── _weather.scss          # Styles with variables
+└── modules/
+    └── yourmodule/
+        └── translations/
+            ├── en/
+            │   └── weather.php    # English translations
+            └── fr/
+                └── weather.php    # French translations
+```
 
 ## Configuration
 
-### Customizing the Display
-
-The main template is located at:
-- **Template**: `src/templates/meteocraft/weather-display.twig`
-
-You can customize:
-- Colors and styling via SCSS variables (see Usage > Styling section)
-- Layout and information displayed by modifying the template
-- Temperature units (currently metric/Celsius)
-
 ### Cache Duration
 
-Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the PHP section in the template file (`src/templates/meteocraft/weather-display.twig`):
+Edit the PHP block in `templates/_weather/display.twig`:
 
 ```php
-// Find this line in the PHP block:
+// Find this line (around line 145):
 $cache->set($cacheKey, $weatherData, 1800);
 
-// Change 1800 (30 minutes) to your desired duration in seconds
-$cache->set($cacheKey, $weatherData, 3600); // Example: 1 hour
+// Change 1800 (30 minutes) to your desired duration in seconds:
+$cache->set($cacheKey, $weatherData, 3600); // 1 hour
 ```
+
+### Customizing Display
+
+The template is fully editable. Modify `templates/_weather/display.twig` to:
+- Change layout and styling
+- Add or remove weather data points
+- Adjust time periods (currently: morning 6am-12pm, afternoon 12pm-6pm, evening 6pm-12am)
 
 ### Translations
 
-Translation files are located in:
-- `src/translations/en/meteocraft.php` (English)
-- `src/translations/fr/meteocraft.php` (French)
+Edit the translation files to customize any text:
+- `translations/en/weather.php` - English
+- `translations/fr/weather.php` - French
 
-You can customize any text by editing these files.
+## Data Source
 
-## Technical Details
+- **API**: Environment and Climate Change Canada (ECCC)
+- **Endpoint**: `https://api.weather.gc.ca/collections/citypageweather-realtime`
+- **Documentation**: [ECCC Open Data](https://eccc-msc.github.io/open-data/msc-data/citypage-weather/readme_citypageweather_en/)
+- **Location**: Ottawa (Kanata - Orléans)
 
-### Architecture
+## Accessibility
 
-- **Template**: Self-contained Twig template with embedded PHP for weather fetching
-- **Styling**: Modular SCSS with customizable variables
-- **Dependencies**: Uses native Craft services (cache, translations) and cURL for API calls
-- **PHP in Twig**: Leverages Craft 5's Twig Perversion feature for simple, maintainable code
+This component is **WCAG 2.1 Level AA compliant**:
 
-### Data Structure
+- ✓ Proper semantic HTML5 elements
+- ✓ ARIA labels and roles
+- ✓ Keyboard accessible
+- ✓ Screen reader friendly
+- ✓ High contrast ratios (4.5:1+)
+- ✓ Bilingual support
 
-The template fetches and parses:
-
-- **Current Conditions**: Real-time weather observations from Ottawa Macdonald-Cartier International Airport
-- **Hourly Forecasts**: 48 hours of hourly forecasts from the ECCC API
-- **Time Period Aggregation**: Groups hourly forecasts into morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am) periods
-- **Smart Summarization**: Calculates temperature ranges, most common conditions, and average precipitation for each period
-
-### Error Handling
-
-- Network errors are logged via CraftCMS logging system
-- Failed API calls show a user-friendly error message in the template
-- Cached data is served if API is temporarily unavailable
+See [ACCESSIBILITY.md](ACCESSIBILITY.md) for details.
 
 ## Troubleshooting
 
 ### Template shows "Unable to load weather data"
 
-1. Check that your server has internet connectivity
-2. Verify cURL is enabled in PHP (`php -m | grep curl`)
-3. Ensure Twig Perversion (PHP in Twig) is enabled in your Craft 5 config
-4. Check CraftCMS logs at `storage/logs/web.log` for detailed error messages
-5. Try clearing the cache: `./craft clear-caches/all`
+1. Verify server has internet connectivity
+2. Check cURL is enabled: `php -m | grep curl`
+3. Ensure PHP in Twig is enabled in your Craft config
+4. Check logs: `storage/logs/web.log`
+5. Clear cache: `./craft clear-caches/all`
 
-### Weather data is not updating
+### Translations not working
 
-Weather data is cached for 30 minutes. To force a refresh:
+1. Verify translations are registered in `config/app.php` or your module
+2. Check file paths match your module structure
+3. Clear cache: `./craft clear-caches/all`
+4. Verify translation category is 'weather' (not 'meteocraft')
 
-```bash
-./craft clear-caches/data-caches
-```
+### Styling not applied
 
-Or clear the cache via Control Panel: **Utilities** → **Clear Caches** → **Data caches**
+1. Verify SCSS file is imported in your main stylesheet
+2. Check file path is correct
+3. Rebuild your CSS: `npm run build` or your build command
+4. Clear browser cache
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) file
 
 ## Credits
 
-- Weather data provided by [Environment and Climate Change Canada](https://weather.gc.ca/)
-- Plugin developed by csabourin
+- Weather data: [Environment and Climate Change Canada](https://weather.gc.ca/)
+- Component by: csabourin
 
 ## Support
 
-For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/csabourin/meteoCraft).
+For issues or questions: [GitHub Repository](https://github.com/csabourin/meteoCraft)
 
-## Changelog
+---
 
-### Version 2.0.0 (2025-12-02)
+## Alternative: Using with Your Existing Controller
 
-- **⚠️ BREAKING CHANGE**: Removed Control Panel widget in favor of simple front-end template
-- **Simplified Architecture**: Now just a Twig include - no complex field types or widgets
-- **PHP in Twig**: Uses Craft 5's PHP support for self-contained, maintainable code
-- **SCSS Styling**: Added modular SCSS file with customizable variables
-- **Front-end Focused**: Designed for displaying weather on public-facing pages
-- **Easier Integration**: Simply include template anywhere in your site
+If you prefer to use your existing controller's `actionFetchJson()` method instead of the embedded PHP, you can modify the template to make an AJAX call:
 
-### Version 1.2.0 (2025-12-02) - DEPRECATED
+```twig
+{# In templates/_weather/display.twig, replace the {% php %} block with: #}
+<div class="meteocraft-weather-display" data-url="{{ url('external-api-data/data/fetch-json', {
+    url: 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=Ottawa'|url_encode
+}) }}">
+    <div class="loading">Loading weather data...</div>
+</div>
 
-- **Field Type Support**: Added field type that can be used in SuperTable and other field types
-- **Entry Integration**: Can now be added to entry pages, not just the dashboard
-- **Dual Usage**: Works as both a field type and dashboard widget
+{# Add JavaScript to fetch and render #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.meteocraft-weather-display');
+    const url = container.dataset.url;
 
-### Version 1.1.0 (2025-12-02)
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Parse and render weather data
+            // ... your rendering logic
+        });
+});
+</script>
+```
 
-- **Bilingual Support**: Full English and French translations
-- **WCAG 2.1 AA Compliance**: 100% accessible with proper ARIA labels, semantic HTML, and keyboard navigation
-- **Improved Color Contrast**: Enhanced colors to meet AA standards (5.5:1 to 16:1 ratios)
-- **Semantic HTML**: Proper use of sections, articles, and definition lists
-- **Screen Reader Support**: Comprehensive ARIA labels and roles
-- **Separate Language Caches**: Independent caching for English and French data
-
-### Version 1.0.1 (2025-12-02)
-
-- Updated to show today's weather by time period (morning/afternoon/evening)
-- Enhanced period cards with temperature ranges and detailed information
-- Added precipitation probability display
-- Improved data aggregation from hourly forecasts
-
-### Version 1.0.0 (2025-12-02)
-
-- Initial release
-- Current weather conditions display
-- Weather forecast display
-- Data caching (30 minutes)
-- Responsive widget design
+However, note that your current controller only allows `services2.arcgis.com` in the allowlist, so you'd need to add `api.weather.gc.ca` to use it for weather data.
