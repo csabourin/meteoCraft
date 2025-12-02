@@ -1,5 +1,8 @@
 // MeteoCraft Weather Display Styles
 // Import this file in your main.scss: @import 'path/to/meteocraft/weather-display';
+//
+// NOTE: This stylesheet contains only visual styles (colors, typography, borders, etc.)
+// Layout and spacing are handled by Gridlex grid framework and spacing utility classes
 
 // Variables (customize these in your main.scss before importing)
 $meteocraft-primary-color: #0066cc !default;
@@ -8,15 +11,12 @@ $meteocraft-border-color: #dee2e6 !default;
 $meteocraft-text-color: #212529 !default;
 $meteocraft-text-secondary: #6c757d !default;
 $meteocraft-border-radius: 8px !default;
-$meteocraft-spacing: 1rem !default;
 $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
 
 .meteocraft-weather-display {
   font-family: $meteocraft-font-family;
   color: $meteocraft-text-color;
   max-width: 800px;
-  margin: 0 auto;
-  padding: $meteocraft-spacing;
 }
 
 // Screen reader only content
@@ -36,7 +36,6 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 .meteocraft-title {
   font-size: 1.5rem;
   font-weight: 600;
-  margin: 0 0 $meteocraft-spacing;
   color: $meteocraft-text-color;
 }
 
@@ -45,25 +44,11 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
   background: $meteocraft-background;
   border: 1px solid $meteocraft-border-color;
   border-radius: $meteocraft-border-radius;
-  padding: $meteocraft-spacing * 1.5;
-  margin-bottom: $meteocraft-spacing * 1.5;
-}
-
-.meteocraft-current-content {
-  display: flex;
-  gap: $meteocraft-spacing * 1.5;
-  align-items: flex-start;
-
-  @media (max-width: 640px) {
-    flex-direction: column;
-    align-items: center;
-  }
 }
 
 .meteocraft-icon {
   width: 100px;
   height: 100px;
-  flex-shrink: 0;
 
   @media (max-width: 640px) {
     width: 120px;
@@ -71,16 +56,10 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
   }
 }
 
-.meteocraft-current-details {
-  flex: 1;
-  min-width: 0;
-}
-
 .meteocraft-temperature {
   font-size: 3rem;
   font-weight: 700;
   line-height: 1;
-  margin-bottom: 0.5rem;
 
   @media (max-width: 640px) {
     text-align: center;
@@ -99,7 +78,6 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 .meteocraft-condition {
   font-size: 1.25rem;
   font-weight: 500;
-  margin-bottom: $meteocraft-spacing;
   color: $meteocraft-text-secondary;
 
   @media (max-width: 640px) {
@@ -108,17 +86,7 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 }
 
 // Statistics
-.meteocraft-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $meteocraft-spacing * 0.75;
-  margin: $meteocraft-spacing 0;
-}
-
 .meteocraft-stat {
-  display: flex;
-  gap: 0.5rem;
-
   dt {
     font-weight: 600;
     color: $meteocraft-text-secondary;
@@ -133,7 +101,6 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 .meteocraft-updated {
   font-size: 0.875rem;
   color: $meteocraft-text-secondary;
-  margin-top: $meteocraft-spacing;
   font-style: italic;
 }
 
@@ -142,25 +109,12 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
   background: $meteocraft-background;
   border: 1px solid $meteocraft-border-color;
   border-radius: $meteocraft-border-radius;
-  padding: $meteocraft-spacing * 1.5;
-  margin-bottom: $meteocraft-spacing * 1.5;
-}
-
-.meteocraft-periods {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: $meteocraft-spacing;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
 }
 
 .meteocraft-period {
   background: white;
   border: 1px solid $meteocraft-border-color;
   border-radius: $meteocraft-border-radius;
-  padding: $meteocraft-spacing;
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 
@@ -173,34 +127,29 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
 .meteocraft-period-name {
   font-size: 1.125rem;
   font-weight: 600;
-  margin: 0 0 0.25rem;
   color: $meteocraft-primary-color;
 }
 
 .meteocraft-period-range {
   font-size: 0.875rem;
   color: $meteocraft-text-secondary;
-  margin-bottom: $meteocraft-spacing * 0.75;
 }
 
 .meteocraft-period-temp {
   font-size: 2rem;
   font-weight: 700;
   color: $meteocraft-primary-color;
-  margin: $meteocraft-spacing * 0.5 0;
 }
 
 .meteocraft-period-condition {
   font-size: 0.9375rem;
   color: $meteocraft-text-color;
-  margin-bottom: 0.5rem;
   min-height: 2.5em;
 }
 
 .meteocraft-period-precip {
   font-size: 0.875rem;
   color: $meteocraft-text-secondary;
-  margin-top: 0.5rem;
 }
 
 // Attribution
@@ -208,7 +157,7 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
   font-size: 0.875rem;
   color: $meteocraft-text-secondary;
   text-align: center;
-  padding: $meteocraft-spacing * 0.75;
+  border-top: 1px solid $meteocraft-border-color;
 
   a {
     color: $meteocraft-primary-color;
@@ -226,7 +175,6 @@ $meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
   background: #f8d7da;
   border: 1px solid #f5c2c7;
   border-radius: $meteocraft-border-radius;
-  padding: $meteocraft-spacing * 1.5;
   color: #842029;
   text-align: center;
 
