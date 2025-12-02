@@ -201,7 +201,7 @@
     {% if weatherData %}
         {# Current Conditions #}
         {% if weatherData.current %}
-            <div class="meteocraft-current mb-5">
+            <div class="meteocraft-current p-3 mb-5">
                 <h2 class="meteocraft-title mb-3">{{ 'Current Conditions'|t('weather') }}</h2>
 
                 <div class="meteocraft-current-content grid">
@@ -271,12 +271,12 @@
 
         {# Today's Forecast #}
         {% if weatherData.periods|length %}
-            <div class="meteocraft-forecast mt-5">
+            <div class="meteocraft-forecast p-3 mt-5">
                 <h2 class="meteocraft-title mb-3">{{ 'Today\'s Forecast'|t('weather') }}</h2>
 
                 <div class="meteocraft-periods grid">
                     {% for period in weatherData.periods %}
-                        <div class="meteocraft-period col-12 _sm-6 _md-4 mb-4">
+                        <div class="meteocraft-period p-2 col-12 _sm-6 _md-4 mb-4">
                             <h3 class="meteocraft-period-name mb-1">{{ period.name }}</h3>
                             <div class="meteocraft-period-range mb-2">{{ period.range }}</div>
 
@@ -307,7 +307,7 @@
         {% endif %}
 
         {# Attribution #}
-        <div class="meteocraft-attribution mt-5 pt-4">
+        <div class="meteocraft-attribution p-2 mt-5 pt-4">
             {{ 'Weather data from'|t('weather') }}
             <a href="https://weather.gc.ca" target="_blank" rel="noopener noreferrer">
                 {{ 'Environment and Climate Change Canada'|t('weather') }}
