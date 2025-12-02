@@ -1,0 +1,52 @@
+{#
+/**
+ * Matrix Widget Template for MeteoCraft
+ *
+ * This template is designed to be included from Matrix/SuperTable fields
+ * in your site templates. It renders the Ottawa weather widget with
+ * data from the widget variable.
+ *
+ * Usage in your macro:
+ * {% case "weather" %}
+ *     {% include 'meteocraft/matrix-widget' %}
+ *
+ * The widget variable should be available from your Matrix block context.
+ */
+#}
+
+{#
+    Try to locate the OttawaWeather field on the block by type so the template
+    works even if the field handle isn't exactly `ottawaWeather`.
+ #}
+{% set weatherField = null %}
+{% set fieldLayout = widget.getFieldLayout() %}
+{% set customFields = fieldLayout ? fieldLayout.customFields : [] %}
+{% for field in customFields %}
+    {% if field.className == 'csabourin\\meteocraft\\fields\\OttawaWeatherField' %}
+        {% set weatherField = field %}
+        {% break %}
+    {% endif %}
+{% endfor %}
+
+{# Pull the value from the block using the discovered handle #}
+{% set weatherData = weatherField ? widget.getFieldValue(weatherField.handle) : null %}
+
+{# Fallback: if the field wasn't found or returned null, fetch fresh data directly #}
+{% if weatherData is null %}
+    {% if weatherField %}
+        {% set weatherData = weatherField.normalizeValue(null, entry ?? null) %}
+    {% else %}
+        {% set weatherField = craft.app.fields.getFieldByHandle('ottawaWeather') %}
+        {% if weatherField %}
+            {% set weatherData = weatherField.normalizeValue(null, entry ?? null) %}
+        {% endif %}
+    {% endif %}
+{% endif %}
+
+{% set language = craft.app.language %}
+{% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
+
+{% include 'meteocraft/widgets/ottawa-weather' with {
+    weatherData: weatherData,
+    language: lang
+} %}
