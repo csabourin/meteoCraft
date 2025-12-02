@@ -22,33 +22,37 @@ A CraftCMS dashboard widget that displays current weather conditions and today's
 
 ## Installation
 
-### Via Composer (Recommended)
+### Quick Install (Recommended)
 
-1. Add the plugin to your project:
-
+**Method 1: Manual Installation**
 ```bash
-composer require csabourin/meteocraft
-```
-
-2. Install the plugin in the CraftCMS Control Panel:
-   - Go to **Settings** → **Plugins**
-   - Find "MeteoCraft" in the list
-   - Click **Install**
-
-### Manual Installation
-
-1. Download or clone this repository into your `plugins` directory:
-
-```bash
-cd /path/to/craft/plugins
-git clone https://github.com/csabourin/meteoCraft.git meteocraft
-```
-
-2. Install via CraftCMS Control Panel as described above, or via command line:
-
-```bash
+cd /path/to/your/craftcms/project
+mkdir -p plugins
+git clone https://github.com/csabourin/meteoCraft.git plugins/meteocraft
 ./craft plugin/install meteocraft
 ```
+
+**Method 2: Composer with Path Repository**
+
+Add to your project's `composer.json`:
+```json
+{
+  "repositories": [
+    {
+      "type": "path",
+      "url": "./plugins/meteocraft"
+    }
+  ]
+}
+```
+
+Then install:
+```bash
+composer require csabourin/meteocraft:@dev
+./craft plugin/install meteocraft
+```
+
+**For detailed installation instructions and troubleshooting, see [INSTALL.md](INSTALL.md)**
 
 ## Usage
 

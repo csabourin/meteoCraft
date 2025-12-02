@@ -1,9 +1,8 @@
 {
   "name": "csabourin/meteocraft",
   "description": "CraftCMS widget that displays Ottawa weather from Environment Canada",
-  "version": "1.1.0",
   "type": "craft-plugin",
-  "keywords": ["craftcms", "weather", "ottawa", "eccc", "widget"],
+  "keywords": ["craftcms", "weather", "ottawa", "eccc", "widget", "bilingual", "accessibility", "wcag"],
   "license": "MIT",
   "authors": [
     {
@@ -11,7 +10,10 @@
     }
   ],
   "require": {
-    "craftcms/cms": "^3.0.0|^4.0.0|^5.0.0"
+    "php": ">=7.4",
+    "craftcms/cms": "^3.0.0|^4.0.0|^5.0.0",
+    "ext-curl": "*",
+    "ext-json": "*"
   },
   "autoload": {
     "psr-4": {
@@ -21,6 +23,9 @@
   "extra": {
     "name": "MeteoCraft",
     "handle": "meteocraft",
-    "class": "csabourin\\meteocraft\\MeteoCraft"
+    "class": "csabourin\\meteocraft\\MeteoCraft",
+    "developer": "csabourin",
+    "developerUrl": "https://github.com/csabourin/meteoCraft",
+    "documentationUrl": "https://github.com/csabourin/meteoCraft/blob/main/README.md"
   }
 }
