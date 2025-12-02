@@ -65,7 +65,16 @@ class MeteoCraft extends Plugin
             View::class,
             View::EVENT_REGISTER_SITE_TEMPLATE_ROOTS,
             function (RegisterTemplateRootsEvent $event) {
-                $event->roots['meteocraft'] = __DIR__ . '/templates';
+                $event->roots['meteocraft'] = __DIR__ . '/templates/meteocraft';
+            }
+        );
+
+        // Expose templates for the control panel as well
+        Event::on(
+            View::class,
+            View::EVENT_REGISTER_CP_TEMPLATE_ROOTS,
+            function (RegisterTemplateRootsEvent $event) {
+                $event->roots['meteocraft'] = __DIR__ . '/templates/meteocraft';
             }
         );
 
