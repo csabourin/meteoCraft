@@ -1,7 +1,7 @@
 {#
-  Ottawa Weather Display
+  Ottawa Weather Display - Craft 4 Compatible
 
-  Usage: {% include '_weather/display' %}
+  Usage: {% include '_matrixWidgets/weather' %}
 
   Optional parameters:
   - city: City to display (default: 'Ottawa')
@@ -12,137 +12,187 @@
 {% set language = craft.app.language %}
 {% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
 {% set cacheKey = 'weather_' ~ city|lower ~ '_' ~ lang %}
-{% set feedUrl = 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=' ~ city|url_encode %}
-{% set data = craft.app.runAction('external-api-data/data/fetch-json', { url: feedUrl }) %}
+{% set cacheDuration = 1800 %} {# 30 minutes #}
 
-{# Fetch weather data using PHP #}
-{% php %}
+{# Try to get cached data first #}
+{% set weatherData = craft.app.cache.get(cacheKey) %}
 
+{# If no cache, fetch fresh data #}
+{% if not weatherData %}
+    {% set feedUrl = 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=' ~ city|url_encode %}
 
-            if (isset($data['features'][0]['properties'])) {
-                $properties = $data['features'][0]['properties'];
-                $current = $properties['currentConditions'] ?? null;
-                $hourlyForecastGroup = $properties['hourlyForecastGroup'] ?? null;
+    {# Fetch data using Craft's HTTP client #}
+    {% set client = create('GuzzleHttp\\Client') %}
+    {% set rawData = null %}
 
-                $weatherData = [
-                    'current' => null,
-                    'periods' => [],
-                ];
+    {% try %}
+        {% set response = client.get(feedUrl, {
+            timeout: 10,
+            connect_timeout: 5
+        }) %}
+        {% set rawData = response.getBody()|json_decode %}
+    {% catch %}
+        {# Silently fail - we'll show error message below #}
+    {% endtry %}
 
-                // Parse current conditions
-                if ($current) {
-                    $weatherData['current'] = [
-                        'condition' => $current['condition'][$lang] ?? 'N/A',
-                        'temperature' => $current['temperature']['value'][$lang] ?? null,
-                        'feelsLike' => $current['windChill']['value'][$lang] ?? $current['temperature']['value'][$lang] ?? null,
-                        'humidity' => $current['relativeHumidity']['value'][$lang] ?? null,
-                        'windSpeed' => $current['wind']['speed']['value'][$lang] ?? null,
-                        'windDirection' => $current['wind']['direction']['value'][$lang] ?? null,
-                        'pressure' => $current['pressure']['value'][$lang] ?? null,
-                        'pressureTrend' => $current['pressure']['tendency'][$lang] ?? null,
-                        'iconCode' => $current['iconCode']['value'] ?? null,
-                        'iconUrl' => $current['iconCode']['url'] ?? null,
-                        'lastUpdated' => $current['timestamp'][$lang] ?? null,
-                    ];
+    {% if rawData and rawData.features is defined and rawData.features|length > 0 %}
+        {% set properties = rawData.features[0].properties %}
+        {% set current = properties.currentConditions ?? null %}
+        {% set hourlyForecastGroup = properties.hourlyForecastGroup ?? null %}
+
+        {% set weatherData = {
+            current: null,
+            periods: []
+        } %}
+
+        {# Parse current conditions #}
+        {% if current %}
+            {% set weatherData = weatherData|merge({
+                current: {
+                    condition: current.condition[lang] ?? 'N/A',
+                    temperature: current.temperature.value[lang] ?? null,
+                    feelsLike: current.windChill.value[lang] ?? current.temperature.value[lang] ?? null,
+                    humidity: current.relativeHumidity.value[lang] ?? null,
+                    windSpeed: current.wind.speed.value[lang] ?? null,
+                    windDirection: current.wind.direction.value[lang] ?? null,
+                    pressure: current.pressure.value[lang] ?? null,
+                    pressureTrend: current.pressure.tendency[lang] ?? null,
+                    iconCode: current.iconCode.value ?? null,
+                    iconUrl: current.iconCode.url ?? null,
+                    lastUpdated: current.timestamp[lang] ?? null,
                 }
+            }) %}
+        {% endif %}
 
-                // Parse hourly forecasts and group by time of day
-                if ($hourlyForecastGroup && isset($hourlyForecastGroup['hourlyForecasts'])) {
-                    $hourlyForecasts = $hourlyForecastGroup['hourlyForecasts'];
-                    $periods = [
-                        'morning' => ['name' => Craft::t('weather', 'Morning'), 'hours' => [], 'range' => Craft::t('weather', 'morning_range')],
-                        'afternoon' => ['name' => Craft::t('weather', 'Afternoon'), 'hours' => [], 'range' => Craft::t('weather', 'afternoon_range')],
-                        'evening' => ['name' => Craft::t('weather', 'Evening'), 'hours' => [], 'range' => Craft::t('weather', 'evening_range')],
-                    ];
+        {# Parse hourly forecasts and group by time of day #}
+        {% if hourlyForecastGroup and hourlyForecastGroup.hourlyForecasts is defined %}
+            {% set hourlyForecasts = hourlyForecastGroup.hourlyForecasts %}
+            {% set periods = {
+                morning: { name: 'Morning'|t('weather'), hours: [], range: '6 AM - 12 PM'|t('weather') },
+                afternoon: { name: 'Afternoon'|t('weather'), hours: [], range: '12 PM - 6 PM'|t('weather') },
+                evening: { name: 'Evening'|t('weather'), hours: [], range: '6 PM - 12 AM'|t('weather') }
+            } %}
 
-                    $today = new DateTime('now', new DateTimeZone('UTC'));
-                    $todayDate = $today->format('Y-m-d');
+            {% set now = now %}
+            {% set todayDate = now|date('Y-m-d') %}
 
-                    foreach ($hourlyForecasts as $forecast) {
-                        $timestamp = $forecast['timestamp'];
-                        $dt = new DateTime($timestamp, new DateTimeZone('UTC'));
-                        $dt->setTimezone(new DateTimeZone('America/Toronto'));
-                        $forecastDate = $dt->format('Y-m-d');
-                        $hour = (int)$dt->format('H');
+            {% for forecast in hourlyForecasts %}
+                {% set timestamp = forecast.timestamp %}
+                {% set forecastDate = timestamp|date('Y-m-d', 'America/Toronto') %}
+                {% set hour = timestamp|date('G', 'America/Toronto')|number_format %}
 
-                        // Only process today's forecasts
-                        if ($forecastDate !== $todayDate) {
-                            continue;
-                        }
+                {# Only process today's forecasts #}
+                {% if forecastDate == todayDate %}
+                    {% set periodData = {
+                        time: timestamp|date('g:i A', 'America/Toronto'),
+                        hour: hour,
+                        temperature: forecast.temperature.value[lang] ?? null,
+                        feelsLike: forecast.windChill.value[lang] ?? forecast.temperature.value[lang] ?? null,
+                        condition: forecast.condition[lang] ?? 'N/A',
+                        iconCode: forecast.iconCode.value ?? null,
+                        iconUrl: forecast.iconCode.url ?? null,
+                        windSpeed: forecast.wind.speed.value[lang] ?? null,
+                        windDirection: forecast.wind.direction.value[lang] ?? null,
+                        precipitation: forecast.lop.value[lang] ?? null,
+                    } %}
 
-                        $periodData = [
-                            'time' => $dt->format('g:i A'),
-                            'hour' => $hour,
-                            'temperature' => $forecast['temperature']['value'][$lang] ?? null,
-                            'feelsLike' => $forecast['windChill']['value'][$lang] ?? $forecast['temperature']['value'][$lang] ?? null,
-                            'condition' => $forecast['condition'][$lang] ?? 'N/A',
-                            'iconCode' => $forecast['iconCode']['value'] ?? null,
-                            'iconUrl' => $forecast['iconCode']['url'] ?? null,
-                            'windSpeed' => $forecast['wind']['speed']['value'][$lang] ?? null,
-                            'windDirection' => $forecast['wind']['direction']['value'][$lang] ?? null,
-                            'precipitation' => $forecast['lop']['value'][$lang] ?? null,
-                        ];
+                    {# Group by time of day #}
+                    {% if hour >= 6 and hour < 12 %}
+                        {% set periods = periods|merge({
+                            morning: periods.morning|merge({
+                                hours: periods.morning.hours|merge([periodData])
+                            })
+                        }) %}
+                    {% elseif hour >= 12 and hour < 18 %}
+                        {% set periods = periods|merge({
+                            afternoon: periods.afternoon|merge({
+                                hours: periods.afternoon.hours|merge([periodData])
+                            })
+                        }) %}
+                    {% elseif hour >= 18 and hour < 24 %}
+                        {% set periods = periods|merge({
+                            evening: periods.evening|merge({
+                                hours: periods.evening.hours|merge([periodData])
+                            })
+                        }) %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
 
-                        // Group by time of day
-                        if ($hour >= 6 && $hour < 12) {
-                            $periods['morning']['hours'][] = $periodData;
-                        } elseif ($hour >= 12 && $hour < 18) {
-                            $periods['afternoon']['hours'][] = $periodData;
-                        } elseif ($hour >= 18 && $hour < 24) {
-                            $periods['evening']['hours'][] = $periodData;
-                        }
-                    }
+            {# Calculate representative data for each period #}
+            {% set processedPeriods = [] %}
+            {% for key, period in periods %}
+                {% if period.hours|length > 0 %}
+                    {% set hours = period.hours %}
+                    {% set count = hours|length %}
+                    {% set middleIndex = (count / 2)|round(0, 'floor') %}
+                    {% set representative = hours[middleIndex] %}
 
-                    // Calculate representative data for each period
-                    foreach ($periods as $key => $period) {
-                        if (count($period['hours']) > 0) {
-                            $hours = $period['hours'];
-                            $count = count($hours);
-                            $middleIndex = (int)floor($count / 2);
-                            $representative = $hours[$middleIndex];
+                    {# Calculate min/max temperatures #}
+                    {% set minTemp = null %}
+                    {% set maxTemp = null %}
+                    {% for hour in hours %}
+                        {% if hour.temperature is not null %}
+                            {% set minTemp = minTemp is null ? hour.temperature : min(minTemp, hour.temperature) %}
+                            {% set maxTemp = maxTemp is null ? hour.temperature : max(maxTemp, hour.temperature) %}
+                        {% endif %}
+                    {% endfor %}
 
-                            $temps = array_column($hours, 'temperature');
-                            $minTemp = min($temps);
-                            $maxTemp = max($temps);
+                    {# Find most common condition #}
+                    {% set conditionCounts = {} %}
+                    {% for hour in hours %}
+                        {% set condition = hour.condition %}
+                        {% set conditionCounts = conditionCounts|merge({
+                            (condition): (conditionCounts[condition] ?? 0) + 1
+                        }) %}
+                    {% endfor %}
 
-                            $conditions = array_column($hours, 'condition');
-                            $conditionCounts = array_count_values($conditions);
-                            arsort($conditionCounts);
-                            $mostCommonCondition = key($conditionCounts);
+                    {# Get the condition with highest count #}
+                    {% set mostCommonCondition = representative.condition %}
+                    {% set maxCount = 0 %}
+                    {% for condition, count in conditionCounts %}
+                        {% if count > maxCount %}
+                            {% set maxCount = count %}
+                            {% set mostCommonCondition = condition %}
+                        {% endif %}
+                    {% endfor %}
 
-                            $precips = array_filter(array_column($hours, 'precipitation'));
-                            $avgPrecip = count($precips) > 0 ? round(array_sum($precips) / count($precips)) : 0;
+                    {# Calculate average precipitation #}
+                    {% set precipSum = 0 %}
+                    {% set precipCount = 0 %}
+                    {% for hour in hours %}
+                        {% if hour.precipitation is not null %}
+                            {% set precipSum = precipSum + hour.precipitation %}
+                            {% set precipCount = precipCount + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    {% set avgPrecip = precipCount > 0 ? (precipSum / precipCount)|round : 0 %}
 
-                            $weatherData['periods'][] = [
-                                'name' => $period['name'],
-                                'range' => $period['range'],
-                                'temperature' => round(($minTemp + $maxTemp) / 2),
-                                'tempRange' => $minTemp . '°C - ' . $maxTemp . '°C',
-                                'minTemp' => $minTemp,
-                                'maxTemp' => $maxTemp,
-                                'feelsLike' => $representative['feelsLike'],
-                                'condition' => $mostCommonCondition,
-                                'iconUrl' => $representative['iconUrl'],
-                                'iconCode' => $representative['iconCode'],
-                                'windSpeed' => $representative['windSpeed'],
-                                'windDirection' => $representative['windDirection'],
-                                'precipitation' => $avgPrecip,
-                            ];
-                        }
-                    }
-                }
+                    {% set processedPeriods = processedPeriods|merge([{
+                        name: period.name,
+                        range: period.range,
+                        temperature: minTemp and maxTemp ? ((minTemp + maxTemp) / 2)|round : representative.temperature,
+                        tempRange: minTemp ~ '°C - ' ~ maxTemp ~ '°C',
+                        minTemp: minTemp,
+                        maxTemp: maxTemp,
+                        feelsLike: representative.feelsLike,
+                        condition: mostCommonCondition,
+                        iconUrl: representative.iconUrl,
+                        iconCode: representative.iconCode,
+                        windSpeed: representative.windSpeed,
+                        windDirection: representative.windDirection,
+                        precipitation: avgPrecip,
+                    }]) %}
+                {% endif %}
+            {% endfor %}
 
-                // Cache for 30 minutes
-                $cache->set($cacheKey, $weatherData, 1800);
-            }
-        }
-    } catch (Exception $e) {
-        Craft::error('Error fetching weather data: ' . $e->getMessage(), __METHOD__);
-    }
-}
+            {% set weatherData = weatherData|merge({ periods: processedPeriods }) %}
+        {% endif %}
 
-$context['weatherData'] = $weatherData;
-{% endphp %}
+        {# Cache the processed data #}
+        {% do craft.app.cache.set(cacheKey, weatherData, cacheDuration) %}
+    {% endif %}
+{% endif %}
 
 <div class="meteocraft-weather-display" role="region" aria-label="{{ 'Ottawa Weather'|t('weather') }}">
     {% if weatherData %}
@@ -206,7 +256,7 @@ $context['weatherData'] = $weatherData;
 
                         {% if weatherData.current.lastUpdated %}
                             <div class="meteocraft-updated">
-                                {{ 'Updated'|t('weather') }}: {{ weatherData.current.lastUpdated }}
+                                {{ 'Updated'|t('weather') }}: {{ weatherData.current.lastUpdated|date('g:i A') }}
                             </div>
                         {% endif %}
                     </div>
