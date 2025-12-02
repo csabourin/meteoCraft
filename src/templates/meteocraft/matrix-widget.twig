@@ -19,7 +19,9 @@
     works even if the field handle isn't exactly `ottawaWeather`.
  #}
 {% set weatherField = null %}
-{% for field in widget.getFieldLayout()?.customFields ?? [] %}
+{% set fieldLayout = widget.getFieldLayout() %}
+{% set customFields = fieldLayout ? fieldLayout.customFields : [] %}
+{% for field in customFields %}
     {% if field.className == 'csabourin\\meteocraft\\fields\\OttawaWeatherField' %}
         {% set weatherField = field %}
         {% break %}
