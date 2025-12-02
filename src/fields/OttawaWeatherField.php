@@ -55,7 +55,7 @@ class OttawaWeatherField extends Field
     /**
      * @inheritdoc
      */
-    public function normalizeValue($value, ?ElementInterface $element = null)
+    public function normalizeValue(mixed $value, ?ElementInterface $element = null): mixed
     {
         // Weather data is always fetched fresh, no stored value
         return $this->fetchWeatherData();
@@ -64,7 +64,7 @@ class OttawaWeatherField extends Field
     /**
      * @inheritdoc
      */
-    public function serializeValue($value, ?ElementInterface $element = null)
+    public function serializeValue(mixed $value, ?ElementInterface $element = null): mixed
     {
         // Don't store weather data - it's always fetched fresh
         return null;
