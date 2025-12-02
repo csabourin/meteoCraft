@@ -1,147 +1,369 @@
-# Installation Instructions
+# Installation Guide
 
-## Method 1: Manual Installation (Recommended for Development)
+This guide will help you integrate the Ottawa Weather Display component into your Craft CMS project.
 
-1. Clone or download this repository into your CraftCMS plugins directory:
+## Prerequisites
+
+Before installing, ensure you have:
+
+- ✅ Craft CMS 5.x installed and running
+- ✅ PHP 8.0 or higher
+- ✅ PHP cURL extension enabled
+- ✅ PHP in Twig (Twig Perversion) enabled in your Craft config
+- ✅ A Craft module set up (for translations)
+
+## Quick Installation
+
+### Step 1: Copy Files
+
+From this repository, copy the files to your Craft project:
 
 ```bash
-cd /path/to/your/craftcms/project
-mkdir -p plugins
-git clone https://github.com/csabourin/meteoCraft.git plugins/meteocraft
+# Navigate to this repository
+cd /path/to/meteoCraft
+
+# Copy template
+cp -r templates/_weather /path/to/your/craft/templates/
+
+# Copy SCSS (adjust path to match your project structure)
+cp -r assets/scss /path/to/your/craft/assets/
+
+# Copy translations to your module
+cp -r translations /path/to/your/craft/modules/yourmodule/
 ```
 
-2. Install via CraftCMS Control Panel:
-   - Go to **Settings** → **Plugins**
-   - Find "MeteoCraft" in the list
-   - Click **Install**
+### Step 2: Register Translations
 
-Or via command line:
+#### Option A: In `config/app.php`
 
-```bash
-./craft plugin/install meteocraft
+Add the translation category to your `config/app.php`:
+
+```php
+<?php
+return [
+    'modules' => [
+        'yourmodule' => \modules\yourmodule\Module::class,
+    ],
+    'components' => [
+        'i18n' => [
+            'translations' => [
+                'weather' => [
+                    'class' => craft\i18n\PhpMessageSource::class,
+                    'sourceLanguage' => 'en',
+                    'basePath' => '@modules/yourmodule/translations',
+                    'allowOverrides' => true,
+                ],
+            ],
+        ],
+    ],
+];
 ```
 
-## Method 2: Composer with Path Repository
+#### Option B: In Your Module
 
-If you want to use Composer, add this to your project's `composer.json`:
+Alternatively, register translations in your module's `init()` method:
 
-```json
+```php
+<?php
+namespace modules\yourmodule;
+
+use Craft;
+use craft\i18n\PhpMessageSource;
+
+class Module extends \yii\base\Module
 {
-  "repositories": [
+    public function init()
     {
-      "type": "path",
-      "url": "./plugins/meteocraft"
+        parent::init();
+
+        // Register weather translations
+        Craft::$app->i18n->translations['weather'] = [
+            'class' => PhpMessageSource::class,
+            'sourceLanguage' => 'en',
+            'basePath' => __DIR__ . '/translations',
+            'allowOverrides' => true,
+        ];
     }
-  ]
 }
 ```
 
-Then require the package:
+### Step 3: Import SCSS
 
-```bash
-composer require csabourin/meteocraft:@dev
+Add the weather styles to your main stylesheet:
+
+```scss
+// In your main.scss or wherever you keep your imports
+@import '../assets/scss/weather';
 ```
 
-## Method 3: Composer with Git Repository
+Or with custom variables:
 
-Add this to your project's `composer.json`:
+```scss
+// Define custom colors BEFORE importing
+$meteocraft-primary-color: #0066cc;
+$meteocraft-background: #f8f9fa;
+$meteocraft-border-color: #dee2e6;
+$meteocraft-text-color: #212529;
+$meteocraft-border-radius: 8px;
 
-```json
-{
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/csabourin/meteoCraft.git"
-    }
-  ]
-}
+// Then import
+@import '../assets/scss/weather';
 ```
 
-Then install:
+### Step 4: Use the Template
 
-```bash
-composer require csabourin/meteocraft:^1.1
-```
-
-## Method 4: Private Packagist (For Production)
-
-For production environments, we recommend using [Private Packagist](https://packagist.com/) or [Satis](https://github.com/composer/satis) to host your private packages.
-
-## Troubleshooting Composer Installation
-
-### "Could not find a version matching your minimum-stability"
-
-This error occurs when installing without proper version constraints. Use one of these solutions:
-
-**Solution 1:** Specify version explicitly with dev stability
-```bash
-composer require csabourin/meteocraft:dev-main
-# or
-composer require csabourin/meteocraft:@dev
-```
-
-**Solution 2:** Lower minimum-stability in your project's composer.json
-```json
-{
-  "minimum-stability": "dev",
-  "prefer-stable": true
-}
-```
-
-**Solution 3:** Use the path repository method (recommended for local development)
-
-### Git Tag Required
-
-If you're installing from a Git repository, make sure the repository has tags:
-
-```bash
-git tag v1.1.0
-git push origin v1.1.0
-```
-
-## Verifying Installation
-
-After installation, verify the plugin is loaded:
-
-```bash
-./craft plugin/list
-```
-
-You should see "MeteoCraft" in the list of installed plugins.
-
-## Post-Installation
-
-### Using as a Dashboard Widget
-
-1. Navigate to your CraftCMS Dashboard
-2. Click the **New Widget** button
-3. Select **Ottawa Weather** from the widget types
-4. The widget will immediately start displaying weather data
-
-### Using as a Field Type
-
-1. Go to **Settings** → **Fields**
-2. Create a new field and select **Ottawa Weather** as the field type
-3. Add this field to any Section, Matrix block, or SuperTable
-4. The field will display current weather data when viewing entries
-
-### Using in Matrix/SuperTable Widgets
-
-If you have a Matrix field or SuperTable with a block type that includes the Ottawa Weather field, you can display it in your templates:
+Include the weather display in any Twig template:
 
 ```twig
-{% case "weather" %}
-    {% include 'meteocraft/matrix-widget' %}
+{% include '_weather/display' %}
 ```
 
-The plugin provides a `matrix-widget.twig` template specifically designed for this use case. This ensures you always use the latest template from the plugin when you update it.
+## Verification
 
-**Important:** Do NOT copy the plugin templates to your site templates directory. Always reference them using the `meteocraft/` prefix to ensure you get updates automatically.
+### Test the Installation
 
-## Requirements
+1. **Create a test page:**
 
-- CraftCMS 3.x, 4.x, or 5.x
-- PHP 7.4 or higher
-- cURL extension enabled
-- JSON extension enabled
-- Internet connection to fetch weather data from ECCC API
+   ```twig
+   {# templates/test-weather.twig #}
+   {% extends "_layout" %}
+
+   {% block content %}
+       <h1>Weather Test</h1>
+       {% include '_weather/display' %}
+   {% endblock %}
+   ```
+
+2. **Visit the page** in your browser
+
+3. **Check for weather data:**
+   - You should see current conditions
+   - You should see forecast periods (morning, afternoon, evening)
+   - Text should be in your site's language (English or French)
+
+### Troubleshooting
+
+#### "Unable to load weather data"
+
+**Check PHP in Twig is enabled:**
+
+In `config/general.php`:
+
+```php
+return [
+    '*' => [
+        'phpSessionName' => 'CraftSessionId',
+        // ... other settings
+    ],
+    'dev' => [
+        'allowAdminChanges' => true,
+        'devMode' => true,
+        'enableTemplateCaching' => false,
+    ],
+];
+```
+
+Then verify in `config/app.php` or your environment config that Twig Perversion is enabled.
+
+**Check cURL:**
+
+```bash
+php -m | grep curl
+```
+
+If cURL is not listed, install it:
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install php-curl
+
+# macOS (using Homebrew)
+brew install php
+```
+
+**Check logs:**
+
+```bash
+tail -f storage/logs/web.log
+```
+
+Look for errors related to weather data fetching.
+
+**Clear cache:**
+
+```bash
+./craft clear-caches/all
+```
+
+#### Translations Not Working
+
+**Verify translation category:**
+
+The template uses `Craft::t('weather', ...)`. Make sure:
+
+1. Translation files are named `weather.php` (not `meteocraft.php`)
+2. Translation category in app.php is `'weather'`
+3. File paths are correct
+
+**Clear cache:**
+
+```bash
+./craft clear-caches/all
+```
+
+**Test translation:**
+
+Create a test template:
+
+```twig
+{{ 'Morning'|t('weather') }}
+```
+
+Should output "Morning" in English or "Matin" in French.
+
+#### Styles Not Applied
+
+**Check SCSS import path:**
+
+Verify the path in your import statement matches your file structure.
+
+**Rebuild CSS:**
+
+```bash
+npm run build
+# or
+npm run dev
+# or whatever your build command is
+```
+
+**Check browser console:**
+
+Look for 404 errors on CSS files.
+
+**Clear cache:**
+
+- Browser cache: Hard refresh (Cmd+Shift+R or Ctrl+Shift+R)
+- Craft cache: `./craft clear-caches/all`
+
+## File Structure After Installation
+
+Your Craft project should look like this:
+
+```
+your-craft-project/
+├── config/
+│   └── app.php                          # Translation registration
+├── modules/
+│   └── yourmodule/
+│       └── translations/
+│           ├── en/
+│           │   └── weather.php          # English translations
+│           └── fr/
+│               └── weather.php          # French translations
+├── templates/
+│   └── _weather/
+│       └── display.twig                 # Weather display template
+└── assets/                              # or src/, or wherever you keep assets
+    └── scss/
+        └── _weather.scss                # Weather styles
+```
+
+## Configuration Options
+
+### Cache Duration
+
+Default: 30 minutes (1800 seconds)
+
+To change, edit `templates/_weather/display.twig`:
+
+```php
+// Around line 145, change:
+$cache->set($cacheKey, $weatherData, 1800);
+
+// To your preferred duration:
+$cache->set($cacheKey, $weatherData, 3600); // 1 hour
+$cache->set($cacheKey, $weatherData, 900);  // 15 minutes
+```
+
+### Language
+
+Auto-detected from `Craft::$app->language`
+
+To override:
+
+```twig
+{% include '_weather/display' with {
+    lang: 'fr'
+} %}
+```
+
+### City
+
+Currently hardcoded to Ottawa.
+
+To change (future enhancement):
+
+```twig
+{% include '_weather/display' with {
+    city: 'Toronto'
+} %}
+```
+
+Note: The API endpoint will need to support the city you specify.
+
+## Advanced: Customization
+
+### Modify Template Layout
+
+Edit `templates/_weather/display.twig` to:
+- Change which data points are displayed
+- Adjust time period definitions
+- Modify HTML structure
+- Add custom styling classes
+
+### Add Custom Translations
+
+Edit `translations/en/weather.php` or `translations/fr/weather.php`:
+
+```php
+return [
+    'Morning' => 'Morning',
+    'Custom Text' => 'Your custom translation',
+    // ... add more
+];
+```
+
+Use in template:
+
+```twig
+{{ 'Custom Text'|t('weather') }}
+```
+
+### Theme Integration
+
+The SCSS file uses CSS variables you can override:
+
+```scss
+// In your theme's variables file
+$meteocraft-primary-color: var(--your-theme-primary);
+$meteocraft-background: var(--your-theme-bg);
+
+// Then import weather styles
+@import 'path/to/weather';
+```
+
+## Support
+
+If you encounter issues:
+
+1. Check the [README.md](README.md) for general usage
+2. Check the [Troubleshooting section](#troubleshooting) above
+3. Enable Dev Mode and check `storage/logs/web.log`
+4. Open an issue on [GitHub](https://github.com/csabourin/meteoCraft)
+
+## Next Steps
+
+- Customize the styling to match your site's theme
+- Add the weather display to your desired templates
+- Consider caching duration based on your needs
+- Customize translations if needed
