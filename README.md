@@ -109,6 +109,34 @@ You can also use MeteoCraft as a traditional dashboard widget:
 3. Select **Ottawa Weather** from the widget types
 4. Click **Save**
 
+### Displaying in Frontend Templates (Matrix/SuperTable)
+
+If you're using a Matrix field or SuperTable and want to display the weather widget on your frontend pages, use the provided template wrapper:
+
+```twig
+{% case "weather" %}
+    {% include 'meteocraft/matrix-widget' %}
+```
+
+This template is specifically designed for use in your site's template macros or display handlers. It:
+- Automatically fetches fresh weather data
+- Detects the site language (English/French)
+- Renders the full weather widget with current conditions and forecast
+
+**Important:** Always use the `meteocraft/` prefix to reference plugin templates. This ensures you receive template updates automatically when you update the plugin. Never copy plugin templates to your site's templates directory.
+
+**Example integration in a displayChildren.twig macro:**
+
+```twig
+{% macro displayWidgets(widget, count, entry) %}
+    {% switch widget.type %}
+        {% case "weather" %}
+            {% include 'meteocraft/matrix-widget' %}
+        {# ... other widget types ... #}
+    {% endswitch %}
+{% endmacro %}
+```
+
 ## Data Source
 
 This plugin uses the official Environment and Climate Change Canada (ECCC) weather API:
