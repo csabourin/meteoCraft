@@ -1,6 +1,6 @@
-# MeteoCraft - Ottawa Weather Widget for CraftCMS
+# MeteoCraft - Ottawa Weather Field for CraftCMS
 
-A CraftCMS dashboard widget that displays current weather conditions and today's forecast by time period (morning/afternoon/evening) for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC).
+A CraftCMS field type that displays current weather conditions and today's forecast by time period (morning/afternoon/evening) for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC). Can be used as a field in SuperTable or other field types, as well as a dashboard widget.
 
 ## Features
 
@@ -56,17 +56,58 @@ composer require csabourin/meteocraft:@dev
 
 ## Usage
 
-1. Navigate to your CraftCMS Dashboard
-2. Click the **New Widget** button
-3. Select **Ottawa Weather** from the widget types
-4. Click **Save**
+### As a Field in SuperTable
 
-The widget will display:
+MeteoCraft is designed to be used as a field within a SuperTable field, allowing you to add weather information to entry pages.
+
+#### Setting up the SuperTable Field
+
+1. Navigate to **Settings** → **Fields**
+2. Find your `centreColumn` SuperTable field (or create one if it doesn't exist)
+3. Edit the SuperTable field and add a new block type:
+   - **Name**: "Weather" (or any name you prefer)
+   - **Handle**: `weather`
+4. Within this block, add a new field:
+   - **Field Type**: Ottawa Weather
+   - **Name**: "Ottawa Weather"
+   - **Handle**: `ottawaWeather`
+   - **Instructions**: (optional) "Displays current weather and forecast for Ottawa"
+
+#### Using the Field in Entries
+
+1. Create or edit an entry that uses the SuperTable field
+2. Add a new "Weather" block to your `centreColumn` SuperTable
+3. The weather data will automatically display in the field (no input required)
+4. Save the entry
+
+The field will display:
 - Current weather conditions at the top with a purple gradient background
 - Today's forecast broken down by time periods (morning, afternoon, evening) in a grid layout
 - Detailed information for each period including temperature range, conditions, wind, and precipitation
 - All text in the language configured for your CraftCMS site (English or French)
 - Weather data updates automatically every 30 minutes
+
+#### Required SuperTable Configuration
+
+For the `centreColumn` SuperTable field, you need:
+
+**Block Type:**
+- **Name**: Weather
+- **Handle**: `weather`
+
+**Fields in Block:**
+- **Type**: Ottawa Weather
+- **Name**: Ottawa Weather
+- **Handle**: `ottawaWeather`
+
+### As a Dashboard Widget
+
+You can also use MeteoCraft as a traditional dashboard widget:
+
+1. Navigate to your CraftCMS Dashboard
+2. Click the **New Widget** button
+3. Select **Ottawa Weather** from the widget types
+4. Click **Save**
 
 ## Data Source
 
@@ -107,17 +148,22 @@ The language is automatically detected from `Craft::$app->language`. If your sit
 
 ## Configuration
 
-### Customizing the Widget
+### Customizing the Display
 
-The widget template is located at `src/templates/widgets/ottawa-weather.twig`. You can customize:
+Templates are located at:
+- **Field template**: `src/templates/fields/input.twig` (used in Control Panel and entry editing)
+- **Widget template**: `src/templates/widgets/ottawa-weather.twig` (used in dashboard)
 
+You can customize:
 - Colors and styling in the `<style>` section
 - Layout and information displayed
 - Temperature units (currently metric/Celsius)
 
 ### Cache Duration
 
-Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the cache duration in `src/widgets/OttawaWeatherWidget.php`:
+Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the cache duration in:
+- `src/fields/OttawaWeatherField.php` (for field usage)
+- `src/widgets/OttawaWeatherWidget.php` (for dashboard widget)
 
 ```php
 // Change 1800 (30 minutes) to your desired duration in seconds
@@ -140,6 +186,12 @@ To add a custom icon for the widget:
 2. The widget will automatically use it in the dashboard
 
 ## Technical Details
+
+### Field Class
+
+- **Class**: `csabourin\meteocraft\fields\OttawaWeatherField`
+- **Extends**: `craft\base\Field`
+- **Usage**: Can be used in SuperTable, Matrix, or as a standalone field
 
 ### Widget Class
 
@@ -195,6 +247,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/csabourin/meteoCraft).
 
 ## Changelog
+
+### Version 1.2.0 (2025-12-02)
+
+- **Field Type Support**: Added field type that can be used in SuperTable and other field types
+- **Entry Integration**: Can now be added to entry pages, not just the dashboard
+- **Dual Usage**: Works as both a field type and dashboard widget
 
 ### Version 1.1.0 (2025-12-02)
 

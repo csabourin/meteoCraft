@@ -1,6 +1,6 @@
 {
   "name": "csabourin/meteocraft",
-  "description": "CraftCMS widget that displays Ottawa weather from Environment Canada",
+  "description": "CraftCMS field type for displaying Ottawa weather from Environment Canada in SuperTable and entries",
   "type": "craft-plugin",
   "keywords": ["craftcms", "weather", "ottawa", "eccc", "widget", "bilingual", "accessibility", "wcag"],
   "license": "MIT",
