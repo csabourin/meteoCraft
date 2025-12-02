@@ -197,55 +197,57 @@
     {% endif %}
 {% endif %}
 
-<div class="meteocraft-weather-display" role="region" aria-label="{{ 'Ottawa Weather'|t('weather') }}">
+<div class="meteocraft-weather-display p-4" role="region" aria-label="{{ 'Ottawa Weather'|t('weather') }}">
     {% if weatherData %}
         {# Current Conditions #}
         {% if weatherData.current %}
-            <div class="meteocraft-current">
-                <h2 class="meteocraft-title">{{ 'Current Conditions'|t('weather') }}</h2>
+            <div class="meteocraft-current mb-5">
+                <h2 class="meteocraft-title mb-3">{{ 'Current Conditions'|t('weather') }}</h2>
 
-                <div class="meteocraft-current-content">
+                <div class="meteocraft-current-content grid">
                     {% if weatherData.current.iconUrl %}
-                        <img
-                            src="{{ weatherData.current.iconUrl }}"
-                            alt="{{ 'Weather icon for'|t('weather') }} {{ weatherData.current.condition }}"
-                            class="meteocraft-icon"
-                            loading="lazy"
-                        >
+                        <div class="col-12 _sm-4 _md-3">
+                            <img
+                                src="{{ weatherData.current.iconUrl }}"
+                                alt="{{ 'Weather icon for'|t('weather') }} {{ weatherData.current.condition }}"
+                                class="meteocraft-icon"
+                                loading="lazy"
+                            >
+                        </div>
                     {% endif %}
 
-                    <div class="meteocraft-current-details">
-                        <div class="meteocraft-temperature">
+                    <div class="meteocraft-current-details col-12 _sm-8 _md-9">
+                        <div class="meteocraft-temperature mb-2">
                             <span class="meteocraft-temp-value">{{ weatherData.current.temperature }}</span>
                             <span class="meteocraft-temp-unit">°C</span>
                         </div>
 
-                        <div class="meteocraft-condition">{{ weatherData.current.condition }}</div>
+                        <div class="meteocraft-condition mb-3">{{ weatherData.current.condition }}</div>
 
-                        <dl class="meteocraft-stats">
+                        <dl class="meteocraft-stats grid">
                             {% if weatherData.current.feelsLike %}
-                                <div class="meteocraft-stat">
+                                <div class="meteocraft-stat col-12 _sm-6 _md-3 mb-2">
                                     <dt>{{ 'Feels Like'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.feelsLike }}°C</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.humidity %}
-                                <div class="meteocraft-stat">
+                                <div class="meteocraft-stat col-12 _sm-6 _md-3 mb-2">
                                     <dt>{{ 'Humidity'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.humidity }}%</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.windSpeed %}
-                                <div class="meteocraft-stat">
+                                <div class="meteocraft-stat col-12 _sm-6 _md-3 mb-2">
                                     <dt>{{ 'Wind'|t('weather') }}:</dt>
                                     <dd>{{ weatherData.current.windDirection }} {{ weatherData.current.windSpeed }} km/h</dd>
                                 </div>
                             {% endif %}
 
                             {% if weatherData.current.pressure %}
-                                <div class="meteocraft-stat">
+                                <div class="meteocraft-stat col-12 _sm-6 _md-3 mb-2">
                                     <dt>{{ 'Pressure'|t('weather') }}:</dt>
                                     <dd>
                                         {{ weatherData.current.pressure }} kPa
@@ -258,7 +260,7 @@
                         </dl>
 
                         {% if weatherData.current.lastUpdated %}
-                            <div class="meteocraft-updated">
+                            <div class="meteocraft-updated mt-3">
                                 {{ 'Updated'|t('weather') }}: {{ weatherData.current.lastUpdated|date('g:i A') }}
                             </div>
                         {% endif %}
@@ -269,29 +271,29 @@
 
         {# Today's Forecast #}
         {% if weatherData.periods|length %}
-            <div class="meteocraft-forecast">
-                <h2 class="meteocraft-title">{{ 'Today\'s Forecast'|t('weather') }}</h2>
+            <div class="meteocraft-forecast mt-5">
+                <h2 class="meteocraft-title mb-3">{{ 'Today\'s Forecast'|t('weather') }}</h2>
 
-                <div class="meteocraft-periods">
+                <div class="meteocraft-periods grid">
                     {% for period in weatherData.periods %}
-                        <div class="meteocraft-period">
-                            <h3 class="meteocraft-period-name">{{ period.name }}</h3>
-                            <div class="meteocraft-period-range">{{ period.range }}</div>
+                        <div class="meteocraft-period col-12 _sm-6 _md-4 mb-4">
+                            <h3 class="meteocraft-period-name mb-1">{{ period.name }}</h3>
+                            <div class="meteocraft-period-range mb-2">{{ period.range }}</div>
 
                             {% if period.iconUrl %}
                                 <img
                                     src="{{ period.iconUrl }}"
                                     alt="{{ 'Weather icon for'|t('weather') }} {{ period.condition }}"
-                                    class="meteocraft-icon"
+                                    class="meteocraft-icon mb-2"
                                     loading="lazy"
                                 >
                             {% endif %}
 
-                            <div class="meteocraft-period-temp">
+                            <div class="meteocraft-period-temp mb-2">
                                 {{ period.temperature }}°C
                             </div>
 
-                            <div class="meteocraft-period-condition">{{ period.condition }}</div>
+                            <div class="meteocraft-period-condition mb-2">{{ period.condition }}</div>
 
                             {% if period.precipitation > 0 %}
                                 <div class="meteocraft-period-precip">
@@ -305,7 +307,7 @@
         {% endif %}
 
         {# Attribution #}
-        <div class="meteocraft-attribution">
+        <div class="meteocraft-attribution mt-5 pt-4">
             {{ 'Weather data from'|t('weather') }}
             <a href="https://weather.gc.ca" target="_blank" rel="noopener noreferrer">
                 {{ 'Environment and Climate Change Canada'|t('weather') }}
@@ -313,7 +315,7 @@
             </a>
         </div>
     {% else %}
-        <div class="meteocraft-error" role="alert">
+        <div class="meteocraft-error p-4" role="alert">
             <p>{{ 'Unable to load weather data'|t('weather') }}</p>
         </div>
     {% endif %}
