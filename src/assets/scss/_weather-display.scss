@@ -1,0 +1,300 @@
+// MeteoCraft Weather Display Styles
+// Import this file in your main.scss: @import 'path/to/meteocraft/weather-display';
+
+// Variables (customize these in your main.scss before importing)
+$meteocraft-primary-color: #0066cc !default;
+$meteocraft-background: #f8f9fa !default;
+$meteocraft-border-color: #dee2e6 !default;
+$meteocraft-text-color: #212529 !default;
+$meteocraft-text-secondary: #6c757d !default;
+$meteocraft-border-radius: 8px !default;
+$meteocraft-spacing: 1rem !default;
+$meteocraft-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !default;
+
+.meteocraft-weather-display {
+  font-family: $meteocraft-font-family;
+  color: $meteocraft-text-color;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $meteocraft-spacing;
+}
+
+// Screen reader only content
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+// Titles
+.meteocraft-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 $meteocraft-spacing;
+  color: $meteocraft-text-color;
+}
+
+// Current Conditions Section
+.meteocraft-current {
+  background: $meteocraft-background;
+  border: 1px solid $meteocraft-border-color;
+  border-radius: $meteocraft-border-radius;
+  padding: $meteocraft-spacing * 1.5;
+  margin-bottom: $meteocraft-spacing * 1.5;
+}
+
+.meteocraft-current-content {
+  display: flex;
+  gap: $meteocraft-spacing * 1.5;
+  align-items: flex-start;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.meteocraft-icon {
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+.meteocraft-current-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.meteocraft-temperature {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
+}
+
+.meteocraft-temp-value {
+  color: $meteocraft-primary-color;
+}
+
+.meteocraft-temp-unit {
+  font-size: 1.5rem;
+  color: $meteocraft-text-secondary;
+}
+
+.meteocraft-condition {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: $meteocraft-spacing;
+  color: $meteocraft-text-secondary;
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
+}
+
+// Statistics
+.meteocraft-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $meteocraft-spacing * 0.75;
+  margin: $meteocraft-spacing 0;
+}
+
+.meteocraft-stat {
+  display: flex;
+  gap: 0.5rem;
+
+  dt {
+    font-weight: 600;
+    color: $meteocraft-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+    color: $meteocraft-text-color;
+  }
+}
+
+.meteocraft-updated {
+  font-size: 0.875rem;
+  color: $meteocraft-text-secondary;
+  margin-top: $meteocraft-spacing;
+  font-style: italic;
+}
+
+// Forecast Section
+.meteocraft-forecast {
+  background: $meteocraft-background;
+  border: 1px solid $meteocraft-border-color;
+  border-radius: $meteocraft-border-radius;
+  padding: $meteocraft-spacing * 1.5;
+  margin-bottom: $meteocraft-spacing * 1.5;
+}
+
+.meteocraft-periods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $meteocraft-spacing;
+
+  @media (max-width: 640px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.meteocraft-period {
+  background: white;
+  border: 1px solid $meteocraft-border-color;
+  border-radius: $meteocraft-border-radius;
+  padding: $meteocraft-spacing;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.meteocraft-period-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: $meteocraft-primary-color;
+}
+
+.meteocraft-period-range {
+  font-size: 0.875rem;
+  color: $meteocraft-text-secondary;
+  margin-bottom: $meteocraft-spacing * 0.75;
+}
+
+.meteocraft-period-temp {
+  font-size: 2rem;
+  font-weight: 700;
+  color: $meteocraft-primary-color;
+  margin: $meteocraft-spacing * 0.5 0;
+}
+
+.meteocraft-period-condition {
+  font-size: 0.9375rem;
+  color: $meteocraft-text-color;
+  margin-bottom: 0.5rem;
+  min-height: 2.5em;
+}
+
+.meteocraft-period-precip {
+  font-size: 0.875rem;
+  color: $meteocraft-text-secondary;
+  margin-top: 0.5rem;
+}
+
+// Attribution
+.meteocraft-attribution {
+  font-size: 0.875rem;
+  color: $meteocraft-text-secondary;
+  text-align: center;
+  padding: $meteocraft-spacing * 0.75;
+
+  a {
+    color: $meteocraft-primary-color;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      text-decoration: underline;
+    }
+  }
+}
+
+// Error State
+.meteocraft-error {
+  background: #f8d7da;
+  border: 1px solid #f5c2c7;
+  border-radius: $meteocraft-border-radius;
+  padding: $meteocraft-spacing * 1.5;
+  color: #842029;
+  text-align: center;
+
+  p {
+    margin: 0;
+  }
+}
+
+// Dark Mode Support (optional - uncomment if needed)
+/*
+@media (prefers-color-scheme: dark) {
+  .meteocraft-weather-display {
+    $meteocraft-background: #1a1a1a;
+    $meteocraft-border-color: #333;
+    $meteocraft-text-color: #f8f9fa;
+    $meteocraft-text-secondary: #adb5bd;
+
+    .meteocraft-current,
+    .meteocraft-forecast {
+      background: $meteocraft-background;
+      border-color: $meteocraft-border-color;
+      color: $meteocraft-text-color;
+    }
+
+    .meteocraft-period {
+      background: #2d2d2d;
+      border-color: $meteocraft-border-color;
+    }
+
+    .meteocraft-title,
+    .meteocraft-condition,
+    .meteocraft-stat dt,
+    .meteocraft-stat dd,
+    .meteocraft-period-condition {
+      color: $meteocraft-text-color;
+    }
+
+    .meteocraft-text-secondary,
+    .meteocraft-updated,
+    .meteocraft-period-range,
+    .meteocraft-period-precip,
+    .meteocraft-attribution {
+      color: $meteocraft-text-secondary;
+    }
+  }
+}
+*/
+
+// Accessibility enhancements
+@media (prefers-reduced-motion: reduce) {
+  .meteocraft-period {
+    transition: none;
+  }
+}
+
+// Print styles
+@media print {
+  .meteocraft-weather-display {
+    max-width: 100%;
+
+    .meteocraft-current,
+    .meteocraft-forecast {
+      break-inside: avoid;
+    }
+
+    .meteocraft-period {
+      box-shadow: none !important;
+      transform: none !important;
+    }
+  }
+}

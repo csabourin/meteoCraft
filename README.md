@@ -1,22 +1,24 @@
-# MeteoCraft - Ottawa Weather Field for CraftCMS
+# MeteoCraft - Ottawa Weather Display for CraftCMS
 
-A CraftCMS field type that displays current weather conditions and today's forecast by time period (morning/afternoon/evening) for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC). Can be used as a field in SuperTable or other field types, as well as a dashboard widget.
+A CraftCMS plugin that provides a simple, accessible weather display component for Ottawa, Ontario, using data from Environment and Climate Change Canada (ECCC). Display current weather conditions and today's forecast by time period (morning/afternoon/evening) on your front-end pages using a simple Twig include.
 
 ## Features
 
+- **Simple Integration**: Just include a Twig template - no complex setup required
 - **Current Weather Conditions**: Real-time temperature, condition, feels-like temperature, humidity, wind speed/direction, and barometric pressure
 - **Today's Forecast by Time Period**: Weather breakdown for morning (6am-12pm), afternoon (12pm-6pm), and evening (6pm-12am)
-- **Detailed Period Information**: Each time period shows temperature range, conditions, feels-like temperature, wind, and precipitation probability
+- **Detailed Period Information**: Each time period shows temperature range, conditions, wind, and precipitation probability
 - **Bilingual Support**: Full English and French translations, automatically detected from CraftCMS site language
 - **WCAG 2.1 AA Compliant**: 100% accessible with proper semantic HTML, ARIA labels, keyboard navigation, and color contrast
-- **Beautiful Design**: Modern, responsive widget design with gradient styling
+- **Customizable Styling**: Includes SCSS file with variables for easy theming
 - **Data Caching**: Weather data is cached for 30 minutes to reduce API calls (separate cache per language)
+- **PHP in Twig**: Uses Craft 5's PHP support for simple, self-contained logic
 - **Official Data Source**: Uses Environment and Climate Change Canada's official weather API with hourly forecasts
 
 ## Requirements
 
-- CraftCMS 3.x, 4.x, or 5.x
-- PHP 7.4 or higher
+- CraftCMS 5.x (for PHP in Twig support / Twig Perversion)
+- PHP 8.0 or higher
 - cURL extension enabled
 - CraftCMS site configured with language settings (for bilingual support)
 
@@ -56,85 +58,111 @@ composer require csabourin/meteocraft:@dev
 
 ## Usage
 
-### As a Field in SuperTable
+### Basic Usage
 
-MeteoCraft is designed to be used as a field within a SuperTable field, allowing you to add weather information to entry pages.
-
-#### Setting up the SuperTable Field
-
-1. Navigate to **Settings** → **Fields**
-2. Find your `centreColumn` SuperTable field (or create one if it doesn't exist)
-3. Edit the SuperTable field and add a new block type:
-   - **Name**: "Weather" (or any name you prefer)
-   - **Handle**: `weather`
-4. Within this block, add a new field:
-   - **Field Type**: Ottawa Weather
-   - **Name**: "Ottawa Weather"
-   - **Handle**: `ottawaWeather`
-   - **Instructions**: (optional) "Displays current weather and forecast for Ottawa"
-
-#### Using the Field in Entries
-
-1. Create or edit an entry that uses the SuperTable field
-2. Add a new "Weather" block to your `centreColumn` SuperTable
-3. The weather data will automatically display in the field (no input required)
-4. Save the entry
-
-The field will display:
-- Current weather conditions at the top with a purple gradient background
-- Today's forecast broken down by time periods (morning, afternoon, evening) in a grid layout
-- Detailed information for each period including temperature range, conditions, wind, and precipitation
-- All text in the language configured for your CraftCMS site (English or French)
-- Weather data updates automatically every 30 minutes
-
-#### Required SuperTable Configuration
-
-For the `centreColumn` SuperTable field, you need:
-
-**Block Type:**
-- **Name**: Weather
-- **Handle**: `weather`
-
-**Fields in Block:**
-- **Type**: Ottawa Weather
-- **Name**: Ottawa Weather
-- **Handle**: `ottawaWeather`
-
-### As a Dashboard Widget
-
-You can also use MeteoCraft as a traditional dashboard widget:
-
-1. Navigate to your CraftCMS Dashboard
-2. Click the **New Widget** button
-3. Select **Ottawa Weather** from the widget types
-4. Click **Save**
-
-### Displaying in Frontend Templates (Matrix/SuperTable)
-
-If you're using a Matrix field or SuperTable and want to display the weather widget on your frontend pages, use the provided template wrapper:
+Simply include the weather display template anywhere in your Twig templates:
 
 ```twig
-{% case "weather" %}
-    {% include 'meteocraft/matrix-widget' %}
+{% include 'meteocraft/weather-display' %}
 ```
 
-This template is specifically designed for use in your site's template macros or display handlers. It:
-- Automatically fetches fresh weather data
-- Detects the site language (English/French)
-- Renders the full weather widget with current conditions and forecast
+That's it! The template will:
+- Automatically fetch fresh weather data from Environment Canada
+- Detect your site's language (English/French)
+- Display current conditions and today's forecast by time period
+- Cache the data for 30 minutes to optimize performance
 
-**Important:** Always use the `meteocraft/` prefix to reference plugin templates. This ensures you receive template updates automatically when you update the plugin. Never copy plugin templates to your site's templates directory.
+### Styling
 
-**Example integration in a displayChildren.twig macro:**
+Import the SCSS file into your main stylesheet:
+
+```scss
+// In your main.scss
+@import 'path/to/vendor/csabourin/meteocraft/src/assets/scss/weather-display';
+```
+
+Or if using Craft's asset bundling:
+
+```scss
+@import '../../../vendor/csabourin/meteocraft/src/assets/scss/weather-display';
+```
+
+#### Customizing Colors
+
+You can customize the colors by defining SCSS variables **before** importing the file:
+
+```scss
+// Define your custom colors first
+$meteocraft-primary-color: #0066cc;
+$meteocraft-background: #f8f9fa;
+$meteocraft-border-color: #dee2e6;
+$meteocraft-text-color: #212529;
+$meteocraft-border-radius: 8px;
+
+// Then import the styles
+@import 'path/to/vendor/csabourin/meteocraft/src/assets/scss/weather-display';
+```
+
+### Advanced Usage
+
+#### Custom City (Future Enhancement)
+
+The template currently displays Ottawa weather. To customize the city in future versions, you can pass a parameter:
 
 ```twig
-{% macro displayWidgets(widget, count, entry) %}
-    {% switch widget.type %}
-        {% case "weather" %}
-            {% include 'meteocraft/matrix-widget' %}
-        {# ... other widget types ... #}
-    {% endswitch %}
-{% endmacro %}
+{% include 'meteocraft/weather-display' with {
+    city: 'Ottawa'
+} %}
+```
+
+#### Language Override
+
+The template auto-detects language from your site, but you can override it:
+
+```twig
+{% include 'meteocraft/weather-display' with {
+    lang: 'fr'
+} %}
+```
+
+### Example Integration
+
+#### In a Layout Template
+
+```twig
+{# templates/_layout.twig #}
+<!DOCTYPE html>
+<html lang="{{ currentSite.language }}">
+<head>
+    <title>{{ siteName }}</title>
+    <link rel="stylesheet" href="/assets/css/main.css">
+</head>
+<body>
+    <aside class="weather-sidebar">
+        {% include 'meteocraft/weather-display' %}
+    </aside>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>
+```
+
+#### In a Specific Template
+
+```twig
+{# templates/pages/home.twig #}
+{% extends "_layout" %}
+
+{% block content %}
+    <h1>Welcome</h1>
+
+    <section class="weather-widget">
+        <h2>Current Weather</h2>
+        {% include 'meteocraft/weather-display' %}
+    </section>
+{% endblock %}
 ```
 
 ## Data Source
@@ -178,24 +206,24 @@ The language is automatically detected from `Craft::$app->language`. If your sit
 
 ### Customizing the Display
 
-Templates are located at:
-- **Field template**: `src/templates/fields/input.twig` (used in Control Panel and entry editing)
-- **Widget template**: `src/templates/widgets/ottawa-weather.twig` (used in dashboard)
+The main template is located at:
+- **Template**: `src/templates/meteocraft/weather-display.twig`
 
 You can customize:
-- Colors and styling in the `<style>` section
-- Layout and information displayed
+- Colors and styling via SCSS variables (see Usage > Styling section)
+- Layout and information displayed by modifying the template
 - Temperature units (currently metric/Celsius)
 
 ### Cache Duration
 
-Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the cache duration in:
-- `src/fields/OttawaWeatherField.php` (for field usage)
-- `src/widgets/OttawaWeatherWidget.php` (for dashboard widget)
+Weather data is cached for 30 minutes by default, with separate caches for English and French. To change this, edit the PHP section in the template file (`src/templates/meteocraft/weather-display.twig`):
 
 ```php
-// Change 1800 (30 minutes) to your desired duration in seconds
+// Find this line in the PHP block:
 $cache->set($cacheKey, $weatherData, 1800);
+
+// Change 1800 (30 minutes) to your desired duration in seconds
+$cache->set($cacheKey, $weatherData, 3600); // Example: 1 hour
 ```
 
 ### Translations
@@ -206,30 +234,18 @@ Translation files are located in:
 
 You can customize any text by editing these files.
 
-### Adding a Custom Icon
-
-To add a custom icon for the widget:
-
-1. Create an SVG icon file at `src/icon.svg`
-2. The widget will automatically use it in the dashboard
-
 ## Technical Details
 
-### Field Class
+### Architecture
 
-- **Class**: `csabourin\meteocraft\fields\OttawaWeatherField`
-- **Extends**: `craft\base\Field`
-- **Usage**: Can be used in SuperTable, Matrix, or as a standalone field
-
-### Widget Class
-
-- **Class**: `csabourin\meteocraft\widgets\OttawaWeatherWidget`
-- **Extends**: `craft\base\Widget`
-- **Max Colspan**: 2 (can span 2 columns in the dashboard)
+- **Template**: Self-contained Twig template with embedded PHP for weather fetching
+- **Styling**: Modular SCSS with customizable variables
+- **Dependencies**: Uses native Craft services (cache, translations) and cURL for API calls
+- **PHP in Twig**: Leverages Craft 5's Twig Perversion feature for simple, maintainable code
 
 ### Data Structure
 
-The widget fetches and parses:
+The template fetches and parses:
 
 - **Current Conditions**: Real-time weather observations from Ottawa Macdonald-Cartier International Airport
 - **Hourly Forecasts**: 48 hours of hourly forecasts from the ECCC API
@@ -239,17 +255,18 @@ The widget fetches and parses:
 ### Error Handling
 
 - Network errors are logged via CraftCMS logging system
-- Failed API calls show a user-friendly error message
+- Failed API calls show a user-friendly error message in the template
 - Cached data is served if API is temporarily unavailable
 
 ## Troubleshooting
 
-### Widget shows "Unable to load weather data"
+### Template shows "Unable to load weather data"
 
 1. Check that your server has internet connectivity
 2. Verify cURL is enabled in PHP (`php -m | grep curl`)
-3. Check CraftCMS logs at `storage/logs/web.log` for detailed error messages
-4. Try clearing the cache: `./craft clear-caches/all`
+3. Ensure Twig Perversion (PHP in Twig) is enabled in your Craft 5 config
+4. Check CraftCMS logs at `storage/logs/web.log` for detailed error messages
+5. Try clearing the cache: `./craft clear-caches/all`
 
 ### Weather data is not updating
 
@@ -276,7 +293,16 @@ For issues, questions, or contributions, please visit the [GitHub repository](ht
 
 ## Changelog
 
-### Version 1.2.0 (2025-12-02)
+### Version 2.0.0 (2025-12-02)
+
+- **⚠️ BREAKING CHANGE**: Removed Control Panel widget in favor of simple front-end template
+- **Simplified Architecture**: Now just a Twig include - no complex field types or widgets
+- **PHP in Twig**: Uses Craft 5's PHP support for self-contained, maintainable code
+- **SCSS Styling**: Added modular SCSS file with customizable variables
+- **Front-end Focused**: Designed for displaying weather on public-facing pages
+- **Easier Integration**: Simply include template anywhere in your site
+
+### Version 1.2.0 (2025-12-02) - DEPRECATED
 
 - **Field Type Support**: Added field type that can be used in SuperTable and other field types
 - **Entry Integration**: Can now be added to entry pages, not just the dashboard
