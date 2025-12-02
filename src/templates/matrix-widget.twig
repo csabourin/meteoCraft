@@ -8,17 +8,44 @@
  *
  * Usage in your macro:
  * {% case "weather" %}
- *     {% include 'meteocraft/matrix-widget' %}
+ *     {% include 'meteocraft/matrix-widget' with { widget: widget, entry: entry } %}
  *
- * The widget variable should be available from your Matrix block context.
+ * The widget variable should be your Matrix/SuperTable block.
+ * The template will look for the first Ottawa Weather field in the block.
+ *
+ * If you know the field handle, you can pass weatherData directly:
+ * {% include 'meteocraft/matrix-widget' with { weatherData: widget.yourFieldHandle } %}
  */
 #}
 
-{% set weatherData = widget.normalizeValue(null, entry) %}
+{# Try to find the weather field data - either passed directly or from the widget block #}
+{% set weatherData = weatherData ?? null %}
+
+{# If not provided, try to find it in the widget block by iterating through fields #}
+{% if not weatherData and widget is defined %}
+    {% set fieldLayout = widget.getFieldLayout() %}
+    {% if fieldLayout %}
+        {% for field in fieldLayout.getCustomFields() %}
+            {% if field.className == 'csabourin\\meteocraft\\fields\\OttawaWeatherField' %}
+                {% set weatherData = attribute(widget, field.handle) %}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endif %}
+
+{# Set language #}
 {% set language = craft.app.language %}
 {% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
 
-{% include 'meteocraft/widgets/ottawa-weather' with {
-    weatherData: weatherData,
-    language: lang
-} %}
+{# Render the weather widget #}
+{% if weatherData %}
+    {% include 'meteocraft/widgets/ottawa-weather' with {
+        weatherData: weatherData,
+        language: lang
+    } %}
+{% else %}
+    <div class="weather-error" style="padding: 20px; text-align: center; color: #e53e3e; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px;">
+        <p><strong>Unable to load weather widget</strong></p>
+        <p>Make sure your Matrix/SuperTable block contains an Ottawa Weather field.</p>
+    </div>
+{% endif %}
