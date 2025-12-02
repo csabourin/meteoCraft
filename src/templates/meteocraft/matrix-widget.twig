@@ -15,18 +15,29 @@
 #}
 
 {#
-    Matrix/SuperTable blocks expose the Ottawa Weather field value via the
-    block's field handle (recommended: `ottawaWeather`). Accessing the field
-    ensures Craft runs the field's normalizeValue() implementation instead of
-    calling it on the Matrix block itself.
+    Try to locate the OttawaWeather field on the block by type so the template
+    works even if the field handle isn't exactly `ottawaWeather`.
  #}
-{% set weatherData = widget.getFieldValue('ottawaWeather') %}
+{% set weatherField = null %}
+{% for field in widget.getFieldLayout()?.customFields ?? [] %}
+    {% if field.className == 'csabourin\\meteocraft\\fields\\OttawaWeatherField' %}
+        {% set weatherField = field %}
+        {% break %}
+    {% endif %}
+{% endfor %}
 
-{# Fallback: if the field handle differs, still fetch fresh data directly #}
+{# Pull the value from the block using the discovered handle #}
+{% set weatherData = weatherField ? widget.getFieldValue(weatherField.handle) : null %}
+
+{# Fallback: if the field wasn't found or returned null, fetch fresh data directly #}
 {% if weatherData is null %}
-    {% set weatherField = craft.app.fields.getFieldByHandle('ottawaWeather') %}
     {% if weatherField %}
         {% set weatherData = weatherField.normalizeValue(null, entry ?? null) %}
+    {% else %}
+        {% set weatherField = craft.app.fields.getFieldByHandle('ottawaWeather') %}
+        {% if weatherField %}
+            {% set weatherData = weatherField.normalizeValue(null, entry ?? null) %}
+        {% endif %}
     {% endif %}
 {% endif %}
 
