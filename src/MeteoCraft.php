@@ -5,10 +5,8 @@ namespace csabourin\meteocraft;
 use Craft;
 use craft\base\Plugin;
 use csabourin\meteocraft\fields\OttawaWeatherField;
-use csabourin\meteocraft\widgets\OttawaWeatherWidget;
 use craft\events\RegisterComponentTypesEvent;
 use craft\events\RegisterTemplateRootsEvent;
-use craft\services\Dashboard;
 use craft\services\Fields;
 use craft\web\View;
 use yii\base\Event;
@@ -16,7 +14,6 @@ use yii\base\Event;
 /**
  * MeteoCraft Plugin
  *
- * @property \craft\services\Dashboard $dashboard
  * @property \craft\services\Fields $fields
  */
 class MeteoCraft extends Plugin
@@ -41,15 +38,6 @@ class MeteoCraft extends Plugin
 
         // Register the @meteocraft alias
         Craft::setAlias('@meteocraft', __DIR__);
-
-        // Register the dashboard widget
-        Event::on(
-            Dashboard::class,
-            Dashboard::EVENT_REGISTER_WIDGET_TYPES,
-            function (RegisterComponentTypesEvent $event) {
-                $event->types[] = OttawaWeatherWidget::class;
-            }
-        );
 
         // Register the field type
         Event::on(

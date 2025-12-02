@@ -1,0 +1,291 @@
+{#
+  Ottawa Weather Display
+
+  Usage: {% include 'meteocraft/weather-display' %}
+
+  Optional parameters:
+  - city: City to display (default: 'Ottawa')
+  - lang: Language code (default: auto-detect from site)
+#}
+
+{% set city = city ?? 'Ottawa' %}
+{% set language = craft.app.language %}
+{% set lang = (language starts with 'fr') ? 'fr' : 'en' %}
+{% set cacheKey = 'meteocraft_' ~ city|lower ~ '_weather_' ~ lang %}
+
+{# Fetch weather data using PHP #}
+{% php %}
+use Craft;
+
+$city = $context['city'];
+$lang = $context['lang'];
+$cacheKey = $context['cacheKey'];
+$cache = Craft::$app->getCache();
+
+// Try to get cached data (cache for 30 minutes)
+$weatherData = $cache->get($cacheKey);
+
+if ($weatherData === false) {
+    try {
+        // Fetch data from ECCC API
+        $url = 'https://api.weather.gc.ca/collections/citypageweather-realtime/items?f=json&limit=1&q=' . urlencode($city);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 200 && $response) {
+            $data = json_decode($response, true);
+
+            if (isset($data['features'][0]['properties'])) {
+                $properties = $data['features'][0]['properties'];
+                $current = $properties['currentConditions'] ?? null;
+                $hourlyForecastGroup = $properties['hourlyForecastGroup'] ?? null;
+
+                $weatherData = [
+                    'current' => null,
+                    'periods' => [],
+                ];
+
+                // Parse current conditions
+                if ($current) {
+                    $weatherData['current'] = [
+                        'condition' => $current['condition'][$lang] ?? 'N/A',
+                        'temperature' => $current['temperature']['value'][$lang] ?? null,
+                        'feelsLike' => $current['windChill']['value'][$lang] ?? $current['temperature']['value'][$lang] ?? null,
+                        'humidity' => $current['relativeHumidity']['value'][$lang] ?? null,
+                        'windSpeed' => $current['wind']['speed']['value'][$lang] ?? null,
+                        'windDirection' => $current['wind']['direction']['value'][$lang] ?? null,
+                        'pressure' => $current['pressure']['value'][$lang] ?? null,
+                        'pressureTrend' => $current['pressure']['tendency'][$lang] ?? null,
+                        'iconCode' => $current['iconCode']['value'] ?? null,
+                        'iconUrl' => $current['iconCode']['url'] ?? null,
+                        'lastUpdated' => $current['timestamp'][$lang] ?? null,
+                    ];
+                }
+
+                // Parse hourly forecasts and group by time of day
+                if ($hourlyForecastGroup && isset($hourlyForecastGroup['hourlyForecasts'])) {
+                    $hourlyForecasts = $hourlyForecastGroup['hourlyForecasts'];
+                    $periods = [
+                        'morning' => ['name' => Craft::t('meteocraft', 'Morning'), 'hours' => [], 'range' => Craft::t('meteocraft', 'morning_range')],
+                        'afternoon' => ['name' => Craft::t('meteocraft', 'Afternoon'), 'hours' => [], 'range' => Craft::t('meteocraft', 'afternoon_range')],
+                        'evening' => ['name' => Craft::t('meteocraft', 'Evening'), 'hours' => [], 'range' => Craft::t('meteocraft', 'evening_range')],
+                    ];
+
+                    $today = new DateTime('now', new DateTimeZone('UTC'));
+                    $todayDate = $today->format('Y-m-d');
+
+                    foreach ($hourlyForecasts as $forecast) {
+                        $timestamp = $forecast['timestamp'];
+                        $dt = new DateTime($timestamp, new DateTimeZone('UTC'));
+                        $dt->setTimezone(new DateTimeZone('America/Toronto'));
+                        $forecastDate = $dt->format('Y-m-d');
+                        $hour = (int)$dt->format('H');
+
+                        // Only process today's forecasts
+                        if ($forecastDate !== $todayDate) {
+                            continue;
+                        }
+
+                        $periodData = [
+                            'time' => $dt->format('g:i A'),
+                            'hour' => $hour,
+                            'temperature' => $forecast['temperature']['value'][$lang] ?? null,
+                            'feelsLike' => $forecast['windChill']['value'][$lang] ?? $forecast['temperature']['value'][$lang] ?? null,
+                            'condition' => $forecast['condition'][$lang] ?? 'N/A',
+                            'iconCode' => $forecast['iconCode']['value'] ?? null,
+                            'iconUrl' => $forecast['iconCode']['url'] ?? null,
+                            'windSpeed' => $forecast['wind']['speed']['value'][$lang] ?? null,
+                            'windDirection' => $forecast['wind']['direction']['value'][$lang] ?? null,
+                            'precipitation' => $forecast['lop']['value'][$lang] ?? null,
+                        ];
+
+                        // Group by time of day
+                        if ($hour >= 6 && $hour < 12) {
+                            $periods['morning']['hours'][] = $periodData;
+                        } elseif ($hour >= 12 && $hour < 18) {
+                            $periods['afternoon']['hours'][] = $periodData;
+                        } elseif ($hour >= 18 && $hour < 24) {
+                            $periods['evening']['hours'][] = $periodData;
+                        }
+                    }
+
+                    // Calculate representative data for each period
+                    foreach ($periods as $key => $period) {
+                        if (count($period['hours']) > 0) {
+                            $hours = $period['hours'];
+                            $count = count($hours);
+                            $middleIndex = (int)floor($count / 2);
+                            $representative = $hours[$middleIndex];
+
+                            $temps = array_column($hours, 'temperature');
+                            $minTemp = min($temps);
+                            $maxTemp = max($temps);
+
+                            $conditions = array_column($hours, 'condition');
+                            $conditionCounts = array_count_values($conditions);
+                            arsort($conditionCounts);
+                            $mostCommonCondition = key($conditionCounts);
+
+                            $precips = array_filter(array_column($hours, 'precipitation'));
+                            $avgPrecip = count($precips) > 0 ? round(array_sum($precips) / count($precips)) : 0;
+
+                            $weatherData['periods'][] = [
+                                'name' => $period['name'],
+                                'range' => $period['range'],
+                                'temperature' => round(($minTemp + $maxTemp) / 2),
+                                'tempRange' => $minTemp . '°C - ' . $maxTemp . '°C',
+                                'minTemp' => $minTemp,
+                                'maxTemp' => $maxTemp,
+                                'feelsLike' => $representative['feelsLike'],
+                                'condition' => $mostCommonCondition,
+                                'iconUrl' => $representative['iconUrl'],
+                                'iconCode' => $representative['iconCode'],
+                                'windSpeed' => $representative['windSpeed'],
+                                'windDirection' => $representative['windDirection'],
+                                'precipitation' => $avgPrecip,
+                            ];
+                        }
+                    }
+                }
+
+                // Cache for 30 minutes
+                $cache->set($cacheKey, $weatherData, 1800);
+            }
+        }
+    } catch (Exception $e) {
+        Craft::error('Error fetching weather data: ' . $e->getMessage(), __METHOD__);
+    }
+}
+
+$context['weatherData'] = $weatherData;
+{% endphp %}
+
+<div class="meteocraft-weather-display" role="region" aria-label="{{ 'Ottawa Weather'|t('meteocraft') }}">
+    {% if weatherData %}
+        {# Current Conditions #}
+        {% if weatherData.current %}
+            <div class="meteocraft-current">
+                <h2 class="meteocraft-title">{{ 'Current Conditions'|t('meteocraft') }}</h2>
+
+                <div class="meteocraft-current-content">
+                    {% if weatherData.current.iconUrl %}
+                        <img
+                            src="{{ weatherData.current.iconUrl }}"
+                            alt="{{ 'Weather icon for'|t('meteocraft') }} {{ weatherData.current.condition }}"
+                            class="meteocraft-icon"
+                            loading="lazy"
+                        >
+                    {% endif %}
+
+                    <div class="meteocraft-current-details">
+                        <div class="meteocraft-temperature">
+                            <span class="meteocraft-temp-value">{{ weatherData.current.temperature }}</span>
+                            <span class="meteocraft-temp-unit">°C</span>
+                        </div>
+
+                        <div class="meteocraft-condition">{{ weatherData.current.condition }}</div>
+
+                        <dl class="meteocraft-stats">
+                            {% if weatherData.current.feelsLike %}
+                                <div class="meteocraft-stat">
+                                    <dt>{{ 'Feels Like'|t('meteocraft') }}:</dt>
+                                    <dd>{{ weatherData.current.feelsLike }}°C</dd>
+                                </div>
+                            {% endif %}
+
+                            {% if weatherData.current.humidity %}
+                                <div class="meteocraft-stat">
+                                    <dt>{{ 'Humidity'|t('meteocraft') }}:</dt>
+                                    <dd>{{ weatherData.current.humidity }}%</dd>
+                                </div>
+                            {% endif %}
+
+                            {% if weatherData.current.windSpeed %}
+                                <div class="meteocraft-stat">
+                                    <dt>{{ 'Wind'|t('meteocraft') }}:</dt>
+                                    <dd>{{ weatherData.current.windDirection }} {{ weatherData.current.windSpeed }} km/h</dd>
+                                </div>
+                            {% endif %}
+
+                            {% if weatherData.current.pressure %}
+                                <div class="meteocraft-stat">
+                                    <dt>{{ 'Pressure'|t('meteocraft') }}:</dt>
+                                    <dd>
+                                        {{ weatherData.current.pressure }} kPa
+                                        {% if weatherData.current.pressureTrend %}
+                                            ({{ weatherData.current.pressureTrend|t('meteocraft') }})
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            {% endif %}
+                        </dl>
+
+                        {% if weatherData.current.lastUpdated %}
+                            <div class="meteocraft-updated">
+                                {{ 'Updated'|t('meteocraft') }}: {{ weatherData.current.lastUpdated }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Today's Forecast #}
+        {% if weatherData.periods|length %}
+            <div class="meteocraft-forecast">
+                <h2 class="meteocraft-title">{{ 'Today\'s Forecast'|t('meteocraft') }}</h2>
+
+                <div class="meteocraft-periods">
+                    {% for period in weatherData.periods %}
+                        <div class="meteocraft-period">
+                            <h3 class="meteocraft-period-name">{{ period.name }}</h3>
+                            <div class="meteocraft-period-range">{{ period.range }}</div>
+
+                            {% if period.iconUrl %}
+                                <img
+                                    src="{{ period.iconUrl }}"
+                                    alt="{{ 'Weather icon for'|t('meteocraft') }} {{ period.condition }}"
+                                    class="meteocraft-icon"
+                                    loading="lazy"
+                                >
+                            {% endif %}
+
+                            <div class="meteocraft-period-temp">
+                                {{ period.temperature }}°C
+                            </div>
+
+                            <div class="meteocraft-period-condition">{{ period.condition }}</div>
+
+                            {% if period.precipitation > 0 %}
+                                <div class="meteocraft-period-precip">
+                                    {{ 'Precipitation'|t('meteocraft') }}: {{ period.precipitation }}%
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        {# Attribution #}
+        <div class="meteocraft-attribution">
+            {{ 'Weather data from'|t('meteocraft') }}
+            <a href="https://weather.gc.ca" target="_blank" rel="noopener noreferrer">
+                {{ 'Environment and Climate Change Canada'|t('meteocraft') }}
+                <span class="sr-only">({{ 'opens in new window'|t('meteocraft') }})</span>
+            </a>
+        </div>
+    {% else %}
+        <div class="meteocraft-error" role="alert">
+            <p>{{ 'Unable to load weather data'|t('meteocraft') }}</p>
+        </div>
+    {% endif %}
+</div>
