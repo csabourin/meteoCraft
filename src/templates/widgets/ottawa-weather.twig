@@ -1,0 +1,202 @@
+{# Ottawa Weather Widget Template #}
+
+<style>
+    .ottawa-weather-widget {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    .weather-current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+
+    .weather-current-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+
+    .weather-current-temp {
+        font-size: 48px;
+        font-weight: bold;
+        line-height: 1;
+    }
+
+    .weather-current-icon img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .weather-current-condition {
+        font-size: 18px;
+        margin-bottom: 10px;
+        opacity: 0.9;
+    }
+
+    .weather-current-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        font-size: 14px;
+        opacity: 0.9;
+    }
+
+    .weather-forecast {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+    }
+
+    .forecast-day {
+        background: #f7fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .forecast-day:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .forecast-day-name {
+        font-weight: bold;
+        color: #2d3748;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .forecast-icon img {
+        width: 50px;
+        height: 50px;
+        margin: 10px 0;
+    }
+
+    .forecast-temp {
+        font-size: 24px;
+        font-weight: bold;
+        color: #4a5568;
+        margin: 10px 0;
+    }
+
+    .forecast-condition {
+        font-size: 12px;
+        color: #718096;
+        line-height: 1.4;
+    }
+
+    .weather-error {
+        padding: 20px;
+        text-align: center;
+        color: #e53e3e;
+        background: #fff5f5;
+        border: 1px solid #feb2b2;
+        border-radius: 8px;
+    }
+
+    .weather-attribution {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e2e8f0;
+        font-size: 11px;
+        color: #a0aec0;
+        text-align: center;
+    }
+
+    .weather-attribution a {
+        color: #667eea;
+        text-decoration: none;
+    }
+
+    .weather-attribution a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<div class="ottawa-weather-widget">
+    {% if weatherData and weatherData.current %}
+        {# Current Conditions #}
+        <div class="weather-current">
+            <div class="weather-current-header">
+                <div>
+                    <div class="weather-current-temp">
+                        {{ weatherData.current.temperature }}°C
+                    </div>
+                    <div class="weather-current-condition">
+                        {{ weatherData.current.condition }}
+                    </div>
+                </div>
+                {% if weatherData.current.iconUrl %}
+                    <div class="weather-current-icon">
+                        <img src="{{ weatherData.current.iconUrl }}"
+                             alt="{{ weatherData.current.condition }}"
+                             loading="lazy">
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="weather-current-details">
+                <div>
+                    <strong>Feels Like:</strong> {{ weatherData.current.feelsLike }}°C
+                </div>
+                <div>
+                    <strong>Humidity:</strong> {{ weatherData.current.humidity }}%
+                </div>
+                <div>
+                    <strong>Wind:</strong> {{ weatherData.current.windDirection }} {{ weatherData.current.windSpeed }} km/h
+                </div>
+                <div>
+                    <strong>Pressure:</strong> {{ weatherData.current.pressure }} kPa
+                    {% if weatherData.current.pressureTrend %}
+                        ({{ weatherData.current.pressureTrend }})
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# 3-Day Forecast #}
+        {% if weatherData.forecasts|length > 0 %}
+            <div class="weather-forecast">
+                {% for forecast in weatherData.forecasts %}
+                    <div class="forecast-day">
+                        <div class="forecast-day-name">
+                            {{ forecast.period }}
+                        </div>
+
+                        {% if forecast.iconUrl %}
+                            <div class="forecast-icon">
+                                <img src="{{ forecast.iconUrl }}"
+                                     alt="{{ forecast.iconSummary }}"
+                                     loading="lazy">
+                            </div>
+                        {% endif %}
+
+                        <div class="forecast-temp">
+                            {{ forecast.temperature }}°C
+                        </div>
+
+                        <div class="forecast-condition">
+                            {{ forecast.iconSummary }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="weather-attribution">
+            Weather data from <a href="https://weather.gc.ca/" target="_blank" rel="noopener">Environment and Climate Change Canada</a>
+        </div>
+
+    {% else %}
+        <div class="weather-error">
+            <p><strong>Unable to load weather data</strong></p>
+            <p>Please check your internet connection and try refreshing the dashboard.</p>
+        </div>
+    {% endif %}
+</div>
