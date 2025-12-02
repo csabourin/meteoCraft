@@ -23,17 +23,19 @@
 
     {# Fetch data using Craft's HTTP client #}
     {% set client = create('GuzzleHttp\\Client') %}
+    {% set response = null %}
     {% set rawData = null %}
 
-    {% try %}
-        {% set response = client.get(feedUrl, {
-            timeout: 10,
-            connect_timeout: 5
-        }) %}
+    {# Attempt to fetch data - if it fails, response will be null #}
+    {% set response = client.get(feedUrl, {
+        timeout: 10,
+        connect_timeout: 5,
+        http_errors: false
+    }) %}
+
+    {% if response and response.getStatusCode() == 200 %}
         {% set rawData = response.getBody()|json_decode %}
-    {% catch %}
-        {# Silently fail - we'll show error message below #}
-    {% endtry %}
+    {% endif %}
 
     {% if rawData and rawData.features is defined and rawData.features|length > 0 %}
         {% set properties = rawData.features[0].properties %}
