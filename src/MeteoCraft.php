@@ -34,6 +34,9 @@ class MeteoCraft extends Plugin
         parent::init();
         self::$plugin = $this;
 
+        // Register the @meteocraft alias
+        Craft::setAlias('@meteocraft', __DIR__);
+
         // Register the widget
         Event::on(
             Dashboard::class,
